@@ -38,3 +38,213 @@
 #kmap-proceed-btn:active {
     transform: scale(0.98);
 }
+
+/* ===================== New scanner UI ===================== */
+
+.kmap-size-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.kmap-size-btn {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 7px 12px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    backdrop-filter: blur(5px);
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.kmap-size-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.kmap-size-btn.active {
+    background: var(--accent, #6c5ce7);
+    border-color: var(--accent, #6c5ce7);
+}
+
+.kmap-icon-btn {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 7px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    backdrop-filter: blur(5px);
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.kmap-icon-btn.active {
+    background: #ffd700;
+    color: #1a1a1a;
+    border-color: #ffd700;
+}
+
+/* Hold-steady progress bar */
+.kmap-progress-track {
+    width: 100%;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+#kmap-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: #00ff88;
+    border-radius: 3px;
+    transition: width 0.12s linear;
+}
+
+/* Review / correction screen */
+.kmap-review-container {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 90px 20px 190px;
+    box-sizing: border-box;
+    overflow-y: auto;
+    background: #0a0a0a;
+    z-index: 5;
+}
+
+.kmap-review-image {
+    position: relative;
+    width: 100%;
+    max-width: 460px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 14px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.kmap-review-image.kmap-blank-grid {
+    background-color: #1c1c1e;
+}
+
+.kmap-review-grid {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    gap: 2px;
+    padding: 2px;
+    box-sizing: border-box;
+}
+
+.kmap-cell-btn {
+    background: rgba(0, 0, 0, 0.35);
+    border: 1.5px solid rgba(0, 255, 136, 0.55);
+    color: #ffffff;
+    font-family: 'Outfit', sans-serif;
+    font-size: clamp(16px, 5vw, 28px);
+    font-weight: 700;
+    cursor: pointer;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+    transition: background 0.15s, transform 0.1s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.kmap-cell-btn:active {
+    transform: scale(0.94);
+    background: rgba(0, 255, 136, 0.25);
+}
+
+.kmap-cell-btn.is-blank {
+    color: rgba(255, 255, 255, 0.45);
+    border-style: dashed;
+}
+
+.kmap-cell-btn.low-confidence {
+    border-color: #ffd700;
+    box-shadow: inset 0 0 0 1000px rgba(255, 215, 0, 0.12);
+}
+
+.kmap-cell-btn.was-auto {
+    color: #ffd700;
+}
+
+.kmap-review-legend {
+    display: flex;
+    gap: 14px;
+    margin-top: 12px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.65);
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.kmap-review-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.kmap-legend-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.kmap-review-hint {
+    margin-top: 14px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.85);
+    text-align: center;
+    max-width: 420px;
+}
+
+#kmap-expr-preview {
+    margin-top: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: #00ff88;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 8px 14px;
+    border-radius: 8px;
+    text-align: center;
+    word-break: break-all;
+    max-width: 460px;
+}
+
+#kmap-rescan-btn {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 1em;
+    font-weight: 700;
+    cursor: pointer;
+    backdrop-filter: blur(5px);
+    width: 100%;
+    margin-top: 10px;
+}
+
+.kmap-manual-link {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 12.5px;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 6px 4px;
+}

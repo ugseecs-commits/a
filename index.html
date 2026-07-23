@@ -634,14 +634,40 @@
     <div id="kmap-camera-popup" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 99999;">
         <video id="kmap-video" autoplay playsinline muted style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;"></video>
         <canvas id="kmap-overlay-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
-        
-        <div style="position: absolute; top: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; align-items: flex-start; z-index: 10;">
-            <div id="kmap-status-msg" style="background: rgba(0,0,0,0.7); color: white; padding: 10px 15px; border-radius: 8px; font-weight: 500; backdrop-filter: blur(5px); max-width: calc(100% - 100px);">Initializing camera...</div>
-            <button id="kmap-camera-close" style="background: rgba(255,50,50,0.8); color: white; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; backdrop-filter: blur(5px);">Exit</button>
+
+        <div id="kmap-review-container" class="kmap-review-container">
+            <div id="kmap-review-image" class="kmap-review-image">
+                <div id="kmap-review-grid" class="kmap-review-grid"></div>
+            </div>
+            <div id="kmap-expr-preview"></div>
+            <div class="kmap-review-legend">
+                <span><i class="kmap-legend-dot" style="background:#ffd700;"></i>low confidence / auto-filled — tap to fix</span>
+            </div>
+            <div class="kmap-review-hint">Tap any cell to cycle blank → 1 → 0 → X.</div>
         </div>
-        
-        <div style="position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; z-index: 10;">
+
+        <div style="position: absolute; top: 20px; left: 20px; right: 20px; z-index: 10; display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+                <div id="kmap-status-msg" style="background: rgba(0,0,0,0.7); color: white; padding: 10px 15px; border-radius: 8px; font-weight: 500; backdrop-filter: blur(5px); max-width: calc(100% - 130px);">Initializing camera...</div>
+                <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                    <button id="kmap-torch-btn" class="kmap-icon-btn" type="button" style="display: none;" title="Toggle flashlight">&#128161;</button>
+                    <button id="kmap-camera-close" style="background: rgba(255,50,50,0.8); color: white; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; backdrop-filter: blur(5px);">Exit</button>
+                </div>
+            </div>
+            <div class="kmap-progress-track"><div id="kmap-progress-fill"></div></div>
+            <div id="kmap-size-row" class="kmap-size-row">
+                <button class="kmap-size-btn active" type="button" data-size="auto">Auto</button>
+                <button class="kmap-size-btn" type="button" data-size="2x2">2&times;2</button>
+                <button class="kmap-size-btn" type="button" data-size="2x4">2&times;4</button>
+                <button class="kmap-size-btn" type="button" data-size="4x2">4&times;2</button>
+                <button class="kmap-size-btn" type="button" data-size="4x4">4&times;4</button>
+                <button id="kmap-manual-entry-btn" class="kmap-manual-link" type="button">Enter Manually</button>
+            </div>
+        </div>
+
+        <div style="position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 460px; z-index: 10;">
             <button id="kmap-proceed-btn" style="display: none; width: 100%; background: var(--accent); color: white; padding: 16px; border-radius: 12px; font-size: 1.1em; font-weight: 700; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">Proceed</button>
+            <button id="kmap-rescan-btn" type="button" style="display: none;">Rescan</button>
         </div>
     </div>
 
