@@ -296,16 +296,10 @@
                     // LINES (text is erased by the line-isolation morphology),
                     // so cell math lines up with the real borders.
                     let refinedPts = refineCorners(sortedPts, hPos, vPos, TARGET_WARP_SIZE);
-                    if (isValidRectangle(refinedPts)) {
-                        bestQuad = approx.clone();
-                        bestGridParams = { pts: refinedPts, rows: gridCheck.rows, cols: gridCheck.cols };
-                        srcTri.delete(); dstTri.delete(); M.delete(); warped.delete();
-                        break;
-                    }
-                    // Refinement produced a skewed/stretched shape — an
-                    // outside line or label most likely threw off a corner.
-                    // Don't accept a distorted grid; fall through and try
-                    // the next contour candidate instead.
+                    bestQuad = approx.clone();
+                    bestGridParams = { pts: refinedPts, rows: gridCheck.rows, cols: gridCheck.cols };
+                    srcTri.delete(); dstTri.delete(); M.delete(); warped.delete();
+                    break;
                 }
 
                 srcTri.delete(); dstTri.delete(); M.delete(); warped.delete();
@@ -411,28 +405,6 @@
         return Math.hypot(p1.x - p2.x, p1.y - p2.y);
     }
 
-    // Confirms a set of 4 corners still looks like a clean, roughly
-    // rectangular grid boundary. If the outer contour swept in an outside
-    // line or label, the line-based refinement can end up pulling one
-    // corner off in a way that visibly stretches/skews the result — this
-    // catches that so the candidate gets rejected instead of accepted.
-    function isValidRectangle(pts) {
-        for (let j = 0; j < 4; j++) {
-            let p1 = pts[j];
-            let p2 = pts[(j + 1) % 4];
-            let p3 = pts[(j + 2) % 4];
-            let v1 = { x: p1.x - p2.x, y: p1.y - p2.y };
-            let v2 = { x: p3.x - p2.x, y: p3.y - p2.y };
-            let mag1 = Math.hypot(v1.x, v1.y);
-            let mag2 = Math.hypot(v2.x, v2.y);
-            if (mag1 < 1 || mag2 < 1) return false;
-            let dot = v1.x * v2.x + v1.y * v2.y;
-            let cos = Math.max(-1, Math.min(1, dot / (mag1 * mag2)));
-            let angle = Math.acos(cos) * 180 / Math.PI;
-            if (angle < 75 || angle > 105) return false;
-        }
-        return true;
-    }
 
     function setProgress(frac) {
         if (progressBar) progressBar.style.width = `${Math.round(Math.min(1, Math.max(0, frac)) * 100)}%`;
