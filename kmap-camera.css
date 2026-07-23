@@ -1,0 +1,40 @@
+/* kmap-camera.css */
+
+.kmap-camera-modal {
+    max-width: 800px;
+    width: 90%;
+}
+
+.camera-wrapper {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.kmap-camera-btn-highlight {
+    animation: pulse-accent 2s infinite;
+}
+
+@keyframes pulse-accent {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+#kmap-status-msg {
+    color: var(--text-primary, #333);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+#kmap-proceed-btn {
+    cursor: pointer;
+    border: none;
+    transition: background 0.2s, transform 0.1s;
+}
+
+#kmap-proceed-btn:hover {
+    filter: brightness(1.1);
+}
+
+#kmap-proceed-btn:active {
+    transform: scale(0.98);
+}

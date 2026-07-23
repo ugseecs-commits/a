@@ -1,0 +1,3485 @@
+/* ==========================================================================
+   Mantiq Premium Modern Design System & Style overrides
+   ========================================================================== */
+
+:root {
+    /* Colors */
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-tertiary: #0f172ab0;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --accent-light: rgba(37, 99, 235, 0.15);
+    --accent-rgb: 37, 99, 235;
+    --border: #334155;
+    --border-focus: #475569;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --success: #10b981;
+    --success-light: rgba(16, 185, 129, 0.15);
+    --error: #ef4444;
+    --error-light: rgba(239, 68, 68, 0.15);
+    --sop-color: #2563eb;
+    --pos-color: #7c3aed;
+    
+    /* Layout Sizes */
+    --sidebar-width: 85px;
+    --topbar-height: auto;
+    --footer-height: 35px;
+    
+    /* Transitions */
+    --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Light Mode Support */
+@media (prefers-color-scheme: light) {
+    :root {
+        --bg-primary: #f8fafc; /* Slate 50 */
+        --bg-secondary: #ffffff;
+        --bg-tertiary: rgba(255, 255, 255, 0.9);
+        --accent: #2563eb;
+        --accent-hover: #1d4ed8;
+        --accent-light: rgba(37, 99, 235, 0.1);
+        --accent-rgb: 37, 99, 235;
+        --border: #e2e8f0;
+        --border-focus: #cbd5e1;
+        --text-primary: #0f172a;
+        --text-secondary: #475569;
+        --text-muted: #64748b;
+        --success: #059669;
+        --success-light: rgba(16, 185, 129, 0.1);
+        --error: #dc2626;
+        --error-light: rgba(239, 68, 68, 0.1);
+        
+        /* Specific element shadows / adjustments for light mode */
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+}
+
+body.light-mode {
+    --bg-primary: #f8fafc;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: rgba(255, 255, 255, 0.9);
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --accent-light: rgba(37, 99, 235, 0.1);
+    --accent-rgb: 37, 99, 235;
+    --border: #e2e8f0;
+    --border-focus: #cbd5e1;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    --success: #059669;
+    --success-light: rgba(16, 185, 129, 0.1);
+    --error: #dc2626;
+    --error-light: rgba(239, 68, 68, 0.1);
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Explicit dark override — re-asserts the same values as the :root default.
+   Needed because @media (prefers-color-scheme: light) above rewrites :root
+   itself based purely on the OS/browser setting, with no awareness of the
+   in-app toggle. Without a class this specific, a user whose OS prefers
+   light had no way to actually reach dark mode — clicking "Dark" removed
+   .light-mode, but :root's own values were already light, so nothing
+   visibly changed. body.dark-mode outranks the :root media-query override
+   for any element under body, so the toggle can now force real dark mode
+   regardless of OS preference. */
+body.dark-mode {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-tertiary: #0f172ab0;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --accent-light: rgba(37, 99, 235, 0.15);
+    --accent-rgb: 37, 99, 235;
+    --border: #334155;
+    --border-focus: #475569;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --success: #10b981;
+    --success-light: rgba(16, 185, 129, 0.15);
+    --error: #ef4444;
+    --error-light: rgba(239, 68, 68, 0.15);
+}
+
+/* Base resets & box sizing */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'Outfit', sans-serif;
+    width: 100vw;
+    height: 100dvh;
+    overflow: hidden;
+    position: fixed;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* App Grid Layout */
+#app-root {
+    display: grid;
+    grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    width: 100%;
+    height: 100%;
+}
+
+#app-root.landing,
+#app-root.showing-examples {
+    grid-template-columns: 0px minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+}
+
+#app-root.landing #sidebar,
+#app-root.showing-examples #sidebar {
+    display: none;
+}
+
+#app-root.landing #workspace-footer,
+#app-root.showing-examples #workspace-footer {
+    display: none;
+}
+
+/* Belt-and-suspenders: while on the landing screen, force every
+   main-workspace view container hidden regardless of the view-hidden
+   class JS happens to have set. This prevents a startup/clear-input
+   race (mantiq_setView firing before the landing class settles) from
+   leaving simulation/circuit/etc. panels visible behind the hero. */
+#app-root.landing #canvas,
+#app-root.landing #truthtable-container,
+#app-root.landing #kmap-container,
+#app-root.landing #solution-container,
+#app-root.landing #verilog-container,
+#app-root.landing #svg-circuit-container,
+#app-root.landing #simulation-container {
+    display: none !important;
+}
+
+/* ==========================================================================
+   Sidebar Navigation — fixed icon-only strip
+   ========================================================================== */
+#sidebar {
+    grid-column: 1;
+    grid-row: 2;
+    background: var(--bg-tertiary);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 0;
+    z-index: 10;
+    overflow: hidden;
+}
+
+.nav-links {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    align-items: center;
+    flex-grow: 1;
+    padding: 0 8px;
+}
+
+.nav-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    width: 54px;
+    height: 46px;
+    border-radius: 14px;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 0;
+}
+
+.nav-icon-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 36px;
+    border-radius: 12px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    flex-shrink: 0;
+}
+
+.nav-btn svg {
+    width: 20px;
+    height: 20px;
+    transition: transform var(--transition-fast);
+}
+
+.nav-btn:hover .nav-icon-wrapper {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+}
+
+.nav-btn:hover svg {
+    transform: scale(1.08);
+}
+
+.nav-btn.active .nav-icon-wrapper {
+    background-color: var(--accent-light);
+    color: var(--accent);
+}
+
+.nav-btn.active svg {
+    stroke-width: 2.2px;
+}
+
+/* Tooltips */
+.nav-btn .tooltip {
+    position: absolute;
+    left: calc(var(--sidebar-width) + 4px);
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-4px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    z-index: 100;
+}
+
+.nav-btn:hover .tooltip {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+
+/* ==========================================================================
+   Main Workspace & Topbar Morph Layout
+   ========================================================================== */
+#main-workspace {
+    display: flex;
+    flex-direction: column;
+    grid-column: 2;
+    grid-row: 2;
+    height: 100%;
+    width: 100%;
+    min-width: 0;
+    position: relative;
+    transition: opacity 0.15s ease-in-out;
+}
+
+#main-workspace.fade-out {
+    opacity: 0;
+}
+
+#app-root.landing #main-workspace,
+#app-root.showing-examples #main-workspace {
+    /* #main-workspace's base rule (above) always places it at grid-column:2
+       grid-row:2 for the normal (sidebar + content) 2-column/2-row grid.
+       Landing/showing-examples mode collapses #app-root down to a single
+       real column (and, on mobile, a single real row) - so that "2" no
+       longer points at an actual track. Without pinning it back to 1/-1
+       here, the grid has to invent a phantom extra column+row just to
+       satisfy the stale placement, and everything that's supposed to span
+       and center across the *real* track (like #topbar's `1 / -1`) ends up
+       measured against that phantom track too, visibly skewing the
+       centered landing content off to one side.
+    */
+    grid-column: 1 / -1;
+    grid-row: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: var(--bg-primary);
+    height: 100%;
+    width: 100%;
+}
+
+#topbar {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    background-color: var(--bg-tertiary);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 8px 12px 8px 24px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    min-width: 0;
+    z-index: 20;
+}
+
+/* Topbar in landing mode */
+#app-root.landing #topbar,
+#app-root.showing-examples #topbar {
+    grid-column: 1 / -1;
+    grid-row: 1 / -1;
+    justify-self: center;
+    align-self: center;
+    background: transparent;
+    backdrop-filter: none;
+    border-bottom: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: min(640px, 90vw);
+    margin: 0;
+    padding: 0;
+    gap: 0;
+}
+
+/* Hero logo - visible in center on landing, top-left on active */
+#hero-logo-wrap {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 0;
+    cursor: pointer;
+    position: relative;
+    z-index: 50;
+    pointer-events: auto;
+    -webkit-tap-highlight-color: transparent;
+}
+
+#app-root.landing #hero-logo-wrap {
+    flex-direction: column;
+    margin-bottom: 32px;
+    gap: 16px;
+}
+
+#hero-logo {
+    width: 64px;
+    height: 64px;
+    filter: none;
+}
+
+#app-root.landing #hero-logo {
+    width: 220px;
+    height: 220px;
+    filter: none;
+}
+
+/* Search Area Wrap */
+.topbar-search-area {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    flex-grow: 1;
+    margin-left: 24px;
+    margin-right: 12px;
+    width: auto;
+    min-width: 0;
+}
+
+#app-root.landing .topbar-search-area {
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    flex-direction: column;
+    gap: 0;
+    flex-grow: 0;
+}
+
+.input-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    width: 100%;
+}
+
+/* Topbar Actions (Right aligned) */
+.topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+    height: 40px; /* Match input box height */
+}
+
+#app-root.landing .topbar-actions {
+    position: absolute;
+    top: 24px;
+    right: 32px;
+}
+
+#app-root.landing #sop-pos-pill,
+#app-root.showing-examples #sop-pos-pill {
+    display: none;
+}
+
+/* Pill Toggle Styles */
+.pill-toggle {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 3px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    cursor: pointer;
+    overflow: hidden;
+    user-select: none; /* Prevent highlighting on hold */
+    height: 100%;
+}
+
+.pill-slider {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    height: calc(100% - 6px);
+    width: calc(50% - 3px);
+    background-color: var(--accent);
+    border-radius: 16px;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1;
+}
+
+.pill-toggle[data-state="pos"] .pill-slider,
+.pill-toggle[data-state="light"] .pill-slider,
+.pill-toggle[data-state="wrap"] .pill-slider,
+.pill-toggle[data-state="3d"] .pill-slider,
+.pill-toggle[data-state="no-tb"] .pill-slider,
+.pill-toggle[data-state="qm"] .pill-slider {
+    transform: translateX(100%);
+}
+
+.pill-option {
+    position: relative;
+    z-index: 2;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 11.5px;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    padding: 6px 16px;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: color 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.theme-toggle .pill-option {
+    padding: 6px 12px;
+}
+
+.verilog-tb-toggle .pill-option {
+    min-width: 100px;
+}
+
+.pill-option.active {
+    color: #fff;
+}
+
+#app-root.landing #result-row,
+#app-root.landing #error-feedback,
+#app-root.showing-examples #result-row,
+#app-root.showing-examples #error-feedback {
+    display: none !important;
+}
+
+/* Input Wrapper & Text Bar */
+.input-wrapper {
+    position: relative;
+    flex-grow: 1;
+    width: 100%;
+}
+
+.search-icon {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    color: var(--text-muted);
+    pointer-events: none;
+    transition: color 0.3s ease;
+}
+
+/* Solutions Drag Carousel */
+.draggable-carousel {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    cursor: grab;
+    align-items: center;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    max-width: calc(100vw - 300px); /* Leave room for sidebar */
+    padding-bottom: 4px; /* Optional, for grab area */
+    min-width: 0;
+}
+.draggable-carousel::-webkit-scrollbar {
+    display: none;
+}
+.draggable-carousel:active {
+    cursor: grabbing;
+}
+
+.solution-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border);
+    padding: 6px 14px;
+    border-radius: 12px;
+    scroll-snap-align: start;
+    flex-shrink: 0;
+    transition: background-color 0.2s ease;
+}
+
+.solution-card:hover {
+    background-color: var(--bg-tertiary);
+}
+
+.solution-card.selected-solution {
+    border-color: var(--primary);
+    background-color: var(--bg-tertiary);
+    box-shadow: 0 0 0 1px var(--primary);
+}
+
+.solution-card .expr-text {
+    font-family: 'STIX Two Text', 'Outfit', serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--success);
+    white-space: nowrap;
+}
+
+.solution-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+
+.solution-card .action-icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.solution-card .action-icon-btn:hover {
+    background: transparent !important;
+    color: var(--text-muted) !important;
+}
+
+.exceeded-msg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    width: 100%;
+    color: var(--text-muted);
+    font-size: 15px;
+    font-weight: 500;
+    text-align: center;
+    padding: 24px;
+    box-sizing: border-box;
+}
+
+.nav-btn.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+#expression-input {
+    width: 100%;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    font-family: 'STIX Two Text', 'Outfit', serif;
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    padding: 11px 76px 11px 24px;
+    border-radius: 24px;
+    outline: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+#expression-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background-color: var(--bg-secondary);
+}
+
+#app-root.landing #expression-input {
+    border-radius: 28px;
+    padding: 16px 86px 16px 28px;
+    font-size: 18px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+#app-root.landing #expression-input:hover {
+    box-shadow: 0 6px 28px rgba(0, 0, 0, 0.22);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+#app-root.landing #expression-input:focus {
+    box-shadow: 0 6px 28px rgba(0, 0, 0, 0.2);
+}
+
+/* Clear Input button inside Search Bar */
+#clear-input-btn {
+    position: absolute;
+    right: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 20px;
+    font-weight: 300;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: var(--transition-fast);
+    line-height: 1;
+}
+
+#clear-input-btn:hover {
+    color: var(--text-primary);
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+#app-root.landing #clear-input-btn {
+    right: 22px;
+}
+
+/* Expression Status button (error / share) - sits just left of the clear (x) button */
+#expr-status-btn {
+    position: absolute;
+    right: 50px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    width: 26px;
+    height: 26px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: var(--transition-fast);
+    padding: 0;
+}
+
+#expr-status-btn svg {
+    display: none;
+    flex-shrink: 0;
+}
+
+#app-root.landing #expr-status-btn {
+    right: 58px;
+}
+
+#expr-status-btn.state-error {
+    color: var(--error);
+}
+
+#expr-status-btn.state-error:hover {
+    color: var(--error);
+    background-color: rgba(255, 255, 255, 0.08); /* Matches clear-btn */
+}
+
+#expr-status-btn.state-error #expr-status-icon-error {
+    display: block;
+}
+
+#expr-status-btn.state-share {
+    color: var(--text-muted);
+}
+
+#expr-status-btn.state-share:hover {
+    color: var(--accent);
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+#expr-status-btn.state-share #expr-status-icon-share {
+    display: block;
+}
+
+/* Share Popup */
+.modal.sm.share-modal {
+    height: auto;
+    min-height: unset;
+    max-height: 90vh;
+}
+
+.share-note {
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+.share-link-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#share-link-input {
+    flex-grow: 1;
+    min-width: 0;
+    background-color: var(--bg-tertiary, var(--bg-primary));
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    font-family: 'Fira Code', 'JetBrains Mono', monospace;
+    font-size: 13px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    outline: none;
+}
+
+#share-copy-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background-color: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: var(--transition-fast);
+}
+
+#share-copy-btn:hover {
+    background-color: var(--accent-hover);
+}
+
+#share-copy-btn.copied {
+    background-color: var(--success);
+}
+
+/* Bottom links on landing */
+.topbar-bottom-links {
+    display: none;
+    gap: 12px;
+    margin-top: 24px;
+    justify-content: center;
+}
+
+#app-root.landing .topbar-bottom-links {
+    display: flex;
+}
+
+.landing-link-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 13.5px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    padding: 6px 16px;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+.landing-link-btn:hover {
+    color: var(--accent);
+    background-color: var(--accent-light);
+    border-color: rgba(37, 99, 235, 0.2);
+}
+
+/* Format Guide Modal Styles */
+.format-modal {
+    max-width: 650px;
+    height: 80%;
+    max-height: 700px;
+}
+
+.format-guide-body {
+    padding: 24px;
+    gap: 28px;
+}
+
+.guide-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.guide-section h3 {
+    font-size: 16px;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+.guide-section p {
+    font-size: 13.5px;
+    color: var(--text-secondary);
+    margin-bottom: 14px;
+    line-height: 1.5;
+}
+
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-tertiary);
+}
+
+.guide-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 13.5px;
+}
+
+.guide-table th {
+    background-color: rgba(255,255,255,0.03);
+    padding: 10px 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    vertical-align: top;
+}
+
+.guide-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-primary);
+    line-height: 1.6;
+    vertical-align: top;
+}
+
+.guide-table tr:last-child td {
+    border-bottom: none;
+}
+
+.guide-table code {
+    background-color: var(--bg-primary);
+    padding: 3px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    white-space: pre-wrap;
+    word-break: break-word;
+    display: inline-block;
+    margin: 2px 0;
+}
+
+/* SOP/POS toggle button style */
+.toggle-btn {
+    padding: 0 16px;
+    height: 42px;
+    border-radius: 21px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: var(--transition-fast);
+    text-transform: uppercase;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+}
+
+.toggle-btn.sop {
+    background-color: var(--sop-color);
+    color: white;
+}
+
+.toggle-btn.sop:hover {
+    background-color: #1d4ed8;
+}
+
+.toggle-btn.pos {
+    background-color: var(--pos-color);
+    color: white;
+}
+
+.toggle-btn.pos:hover {
+    background-color: #6d28d9;
+}
+
+/* Result Row Display */
+#result-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0;
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    min-width: 0;
+}
+
+#simplified-label {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-muted);
+    padding: 0 4px;
+    user-select: none;
+}
+
+#simplified-display {
+    font-family: 'Fira Code', 'JetBrains Mono', monospace;
+    font-size: 18px;
+    color: var(--success);
+    font-weight: 500;
+    word-break: break-all;
+}
+
+.action-icon-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    transition: var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-icon-btn:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+}
+
+.link-btn {
+    background: none;
+    border: none;
+    color: var(--accent);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: underline;
+    transition: var(--transition-fast);
+    padding: 4px 8px;
+}
+
+.link-btn:hover {
+    color: #60a5fa;
+}
+
+.error-text {
+    color: var(--error);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* ==========================================================================
+   Canvas & Empty States
+   ========================================================================== */
+#canvas-container {
+    flex-grow: 1;
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+canvas.emscripten {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    outline: none;
+    border: none;
+}
+
+/* Empty State Styling */
+#empty-state {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-primary);
+    z-index: 9;
+    display: flex;
+    align-items: flex-start; /* Fixes the top-clipping overflow bug */
+    justify-content: center;
+    padding: 32px;
+    overflow-y: auto;
+}
+
+.empty-state-content {
+    width: 100%;
+    max-width: 950px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+.empty-card-header {
+    text-align: center;
+}
+
+.empty-card-header h2 {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.empty-card-header .subtitle {
+    color: var(--text-secondary);
+    font-size: 14.5px;
+}
+
+/* Minimalist Typographic 2x2 Grid Layout */
+.empty-state-examples {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 48px;
+    row-gap: 32px;
+    width: 100%;
+    text-align: left;
+}
+
+.example-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.example-section h4 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    margin: 0;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+    width: 100%;
+}
+
+.example-links-column {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    width: 100%;
+}
+
+.example-link-item {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-family: 'Fira Code', 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 6px 12px;
+    margin-left: -12px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    text-align: left;
+    width: fit-content;
+}
+
+.example-link-item:hover {
+    color: var(--accent);
+    background-color: var(--accent-light);
+    transform: translateX(4px);
+}
+
+.expr-text {
+    font-family: 'Fira Code', 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.1px;
+}
+
+.expr-desc {
+    font-family: 'Outfit', sans-serif;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin-top: 6px;
+    font-weight: 400;
+    line-height: 1.4;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ==========================================================================
+   Footer
+   ========================================================================== */
+#workspace-footer {
+    height: var(--footer-height);
+    background-color: var(--bg-tertiary);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+#workspace-footer b {
+    color: var(--text-secondary);
+}
+
+/* ==========================================================================
+   Modals (Modern Glass & Grid lists)
+   ========================================================================== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.modal {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 820px;
+    height: 82%;
+    max-height: 660px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-lg, 0 25px 50px -12px rgba(0, 0, 0, 0.5));
+    animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modal.sm {
+    max-width: 560px;
+    height: 60%;
+    max-height: 400px;
+}
+
+.modal-header {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.modal-header h2 {
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.modal-header-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.modal-header-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background-color: var(--accent-light);
+    color: var(--accent);
+    flex-shrink: 0;
+}
+
+.modal-header-text {
+    min-width: 0;
+}
+
+.modal-header-text h2 {
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.modal-subtitle {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 28px;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.modal-close:hover {
+    color: var(--text-primary);
+}
+
+.modal-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.modal-footer {
+    padding: 14px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.modal-footer-hint {
+    font-size: 12.5px;
+    color: var(--text-muted);
+}
+
+/* QM log formatting inside modal */
+.qm-empty {
+    color: var(--text-secondary);
+    font-size: 14px;
+    text-align: center;
+    padding: 48px 20px;
+}
+
+/* ── QM Section (top-level grouping: SOP Minimization / POS) ───────────── */
+.qm-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.qm-section + .qm-section {
+    margin-top: 0;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+}
+
+/* Section title: larger, bold, no color badge — pure typography */
+.qm-section-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 4px;
+}
+
+/* ── QM Step (collapsible numbered sub-section) ────────────────────────── */
+.qm-step {
+    border-radius: 6px;
+    margin-bottom: 2px;
+}
+
+.qm-step + .qm-step {
+    margin-top: 4px;
+}
+
+.qm-step-summary {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    cursor: pointer;
+    user-select: none;
+    transition: var(--transition-fast);
+    border-radius: 6px;
+}
+
+.qm-step-summary::-webkit-details-marker {
+    display: none;
+}
+
+.qm-step-summary::marker {
+    content: '';
+}
+
+.qm-step-summary:hover {
+    background-color: rgba(255, 255, 255, 0.04);
+}
+
+.qm-step-num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'Outfit', sans-serif;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.qm-step-title {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    flex-grow: 1;
+    font-family: 'Outfit', sans-serif;
+}
+
+.qm-chevron {
+    color: var(--text-muted);
+    transition: transform var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.qm-step[open] .qm-chevron {
+    transform: rotate(180deg);
+}
+
+.qm-step-body {
+    padding: 4px 8px 10px 38px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Sub-heading inside a step body (e.g. "Initial Term Binary Representations") */
+.qm-h3 {
+    font-size: 10.5px;
+    color: var(--text-muted);
+    margin-top: 6px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Outfit', sans-serif;
+}
+
+.qm-status-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.qm-block {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* ── QM Row (generic data line) ─────────────────────────────────────────── */
+.qm-row {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 3px 0;
+}
+
+.qm-term-list-row {
+    align-items: center;
+}
+
+.qm-term-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+/* ── Term Badge (binary code + literal label) ───────────────────────────── */
+.qm-term-badge {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.2;
+    padding: 4px 10px 5px;
+    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+}
+
+.qm-term-badge .qm-term-bin {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+}
+
+.qm-term-badge .qm-term-lit {
+    font-family: 'Times New Roman', Times, serif;
+    font-style: italic;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0;
+    color: var(--text-muted);
+    display: flex;
+    justify-content: center;
+}
+
+.qm-lit-var {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 9px;
+    text-align: center;
+    line-height: 1;
+}
+
+.qm-lit-var.neg {
+    text-decoration: overline;
+    text-decoration-thickness: 1px;
+}
+
+.qm-lit-dash {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 9px;
+    text-align: center;
+    color: var(--text-faint, var(--text-muted));
+    opacity: 0.5;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+}
+
+/* Result badges: accent color, visually distinguishable as a "final" term */
+.qm-term-badge.result {
+    background-color: rgba(var(--accent-rgb, 37, 99, 235), 0.08);
+    border-color: rgba(var(--accent-rgb, 37, 99, 235), 0.2);
+}
+
+.qm-term-badge.result .qm-term-bin { color: var(--accent); }
+.qm-term-badge.result .qm-term-lit { color: var(--accent); opacity: 0.85; }
+
+/* ── Num Chip (plain decimal minterm indices) ────────────────────────────── */
+.qm-num-chip {
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    padding: 3px 8px;
+    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Discarded / dominated implicants */
+.qm-row-discarded {
+    opacity: 0.55;
+}
+
+.qm-row-discarded .qm-term-badge.discarded .qm-term-bin,
+.qm-row-discarded .qm-term-badge.discarded .qm-term-lit {
+    text-decoration: line-through;
+}
+
+.badge.discarded {
+    color: var(--danger, #ef4444);
+    background-color: rgba(239, 68, 68, 0.1);
+}
+
+.badge.dc {
+    color: var(--text-muted);
+    background-color: rgba(255, 255, 255, 0.04);
+    text-transform: none;
+    font-weight: 500;
+}
+
+/* Note lines ("No more merges possible.", etc.) */
+.qm-row-note {
+    font-family: 'Outfit', sans-serif;
+    font-style: italic;
+    color: var(--text-muted);
+    font-size: 12px;
+    letter-spacing: 0.01em;
+}
+
+.qm-row-label {
+    font-family: 'Outfit', sans-serif;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.qm-row-op {
+    color: var(--text-secondary);
+    opacity: 0.6;
+    font-weight: 600;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.qm-row-pi {
+    border-left: 2px solid var(--border-focus);
+    padding-left: 10px;
+}
+
+.qm-row-label.pi {
+    color: var(--text-secondary);
+}
+
+/* ── Merge Rows (A + B = C) ───────────────────────────────────────────── */
+.qm-merge-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.qm-merge-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 10px;
+    flex-wrap: wrap;
+}
+
+.qm-merge-row:not(:last-child) {
+    border-bottom: 1px solid var(--border);
+}
+
+.qm-merge-row:hover {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+.qm-merge-op {
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+/* ── Prime-Implicant Cards ───────────────────────────────────────────── */
+.qm-pi-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border-left: 2px solid rgba(var(--accent-rgb, 37, 99, 235), 0.3);
+    padding-left: 10px;
+}
+
+.qm-pi-card {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border);
+}
+
+.qm-pi-card-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.qm-pi-card-label {
+    font-family: 'Outfit', sans-serif;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--accent);
+    opacity: 0.85;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.qm-pi-card-covers {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.qm-pi-covers-op {
+    font-family: 'Outfit', sans-serif;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding-top: 3px;
+}
+
+/* ── Final Result Box ────────────────────────────────────────────────────── */
+.qm-final {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 12px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border-focus, var(--accent));
+    background-color: rgba(var(--accent-rgb, 37, 99, 235), 0.06);
+}
+
+.qm-final-label {
+    font-family: 'Outfit', sans-serif;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+}
+
+.qm-final-terms {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.qm-final-terms .qm-term-badge {
+    padding: 6px 14px 7px;
+    background-color: rgba(var(--accent-rgb, 37, 99, 235), 0.05);
+    border-color: rgba(var(--accent-rgb, 37, 99, 235), 0.2);
+}
+
+.qm-final-terms .qm-term-badge .qm-term-bin {
+    font-size: 13px;
+    color: var(--accent);
+}
+
+.qm-final-terms .qm-term-badge .qm-term-lit {
+    font-size: 15px;
+    color: var(--accent);
+    opacity: 0.8;
+}
+
+.qm-final-plus {
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.qm-final-dot {
+    font-size: 22px;
+    line-height: 1;
+}
+
+/* Log badges - uniform styling for SOP and POS */
+.badge {
+    padding: 3px 9px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    font-family: 'JetBrains Mono', monospace;
+    border: 1px solid transparent;
+    white-space: nowrap;
+}
+
+.badge.term {
+    background-color: rgba(255, 255, 255, 0.04);
+    color: var(--text-secondary);
+    border-color: var(--border);
+}
+
+.badge.result {
+    background-color: var(--accent-light);
+    color: var(--accent);
+    border-color: rgba(37, 99, 235, 0.25);
+}
+
+/* Alternative solutions row list */
+.sol-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background-color: var(--bg-primary);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+}
+
+.sol-row:hover {
+    border-color: var(--border-focus);
+}
+
+.sol-option {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.sol-expr {
+    color: var(--text-primary);
+    word-break: break-all;
+    flex-grow: 1;
+    margin: 0 16px;
+}
+
+/* ==========================================================================
+   Toasts
+   ========================================================================== */
+#toast-container {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: none;
+}
+
+.toast {
+    background-color: var(--bg-secondary);
+    border-left: 4px solid var(--accent);
+    color: var(--text-primary);
+    padding: 14px 20px;
+    border-radius: 8px;
+    box-shadow: var(--shadow-lg, 0 10px 25px rgba(0,0,0,0.3));
+    font-size: 14px;
+    font-weight: 500;
+    min-width: 280px;
+    max-width: 400px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transform: translateX(120%);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s;
+    pointer-events: auto;
+    opacity: 0;
+}
+
+.toast.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.toast.success { border-left-color: var(--success); }
+.toast.error { border-left-color: var(--error); }
+
+/* ==========================================================================
+   Loading & Portrait Warnings
+   ========================================================================== */
+#loading-overlay {
+    position: absolute; top: 0; left: 0; width: 100vw; height: 100dvh;
+    background-color: var(--bg-primary); display: flex; flex-direction: column; 
+    justify-content: center; align-items: center; z-index: 10000; 
+    transition: opacity 0.6s ease-out, visibility 0.6s;
+}
+
+.spinner {
+    width: 48px; height: 48px; border: 4px solid rgba(255,255,255,0.1);
+    border-left-color: var(--accent); border-radius: 50%;
+    animation: spin 1s linear infinite; margin-bottom: 24px;
+}
+
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+.loading-title { font-family: 'Outfit', sans-serif; color: var(--text-primary); font-size: 32px; font-weight: 700; letter-spacing: 1px; margin: 0; }
+.loading-subtitle { color: var(--text-secondary); font-size: 14px; margin-top: 8px; }
+
+#portrait-warning {
+    display: none; position: absolute; top: 0; left: 0; width: 100vw; height: 100dvh;
+    background-color: rgba(15, 23, 42, 0.98); backdrop-filter: blur(5px);
+    z-index: 20000; color: white; flex-direction: column; 
+    justify-content: center; align-items: center; text-align: center;
+}
+
+.rotate-icon { font-size: 48px; margin-bottom: 16px; animation: tilt 2s infinite ease-in-out; }
+@keyframes tilt { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-90deg); } }
+
+/*
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+/* ==========================================================================
+   Truth Table & Waveform HTML5 View
+   ========================================================================== */
+#truthtable-container, #kmap-container, #svg-circuit-container, #simulation-container, #verilog-container, #solution-container {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    box-sizing: border-box;
+    padding: 20px;
+    background-color: var(--bg-primary);
+    z-index: 8;
+    overflow: hidden;
+}
+
+/* Each view container already declares its own correct display value
+   (grid, flex, block) above. JS only needs to toggle this class to hide
+   a view — it should never set an inline display value, since that would
+   override (and can silently drift out of sync with) the type declared
+   here. */
+.view-hidden {
+    display: none !important;
+}
+
+#truthtable-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+#kmap-container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+}
+
+#solution-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.solution-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.solution-content-wrapper {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 16px;
+    font-family: 'Outfit', sans-serif;
+    line-height: 1.6;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    margin-top: 12px;
+    border: 1px solid var(--border);
+}
+
+.solution-empty {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.tt-panel, .wave-panel, .verilog-panel, .kmap-panel, .kmap-analysis-panel, .solution-panel {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    box-shadow: var(--shadow-md, 0 4px 6px rgba(0,0,0,0.1));
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-shrink: 0;
+}
+
+.kmap-solutions-wrapper {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 2px;
+}
+
+.panel-header h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.action-btn-secondary {
+    background-color: var(--accent-light);
+    border: 1px solid rgba(37, 99, 235, 0.2);
+    color: var(--accent);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.action-btn-secondary:hover {
+    background-color: var(--accent);
+    color: white;
+}
+
+.table-scroll-wrapper {
+    flex-grow: 1;
+    overflow-y: auto;
+    overflow-x: auto;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    padding: 0;
+    /* center a narrow table (few variables) instead of letting it hug the
+       left edge once it's no longer stretched to fill the wrapper */
+    display: flex;
+    justify-content: center;
+}
+
+.wave-scroll-wrapper {
+    flex-grow: 1;
+    /* Desktop: the canvas is always sized to fit this box exactly (see
+       renderHTMLWaveform in app.js), so this never needs to scroll -
+       hidden instead of auto means no scrollbar ever appears here. Mobile
+       restores overflow-y: auto below, since it still enforces a 40px-
+       per-signal floor that can outgrow the box on tall variable counts. */
+    overflow-y: hidden;
+    overflow-x: hidden; /* Lock horizontal to fit */
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    padding: 8px;
+}
+
+/* Truth Table CSS */
+#html-truth-table {
+    /* Maximize into the available width instead of sizing to content and
+       centering - the wrapper still scrolls horizontally if a table with
+       many variables ends up wider than the panel. */
+    width: 100%;
+    min-width: 320px;
+    margin: 0 auto;
+    border-collapse: separate;
+    border-spacing: 0;
+    /* Same family/weight/tracking as the algebraic proof's .alg-expr
+       lines, instead of the old monospace data-table look. */
+    font-family: 'Outfit', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+}
+
+#html-truth-table th {
+    background-color: var(--bg-secondary);
+    color: var(--text-secondary);
+    padding: 11px 20px;
+    /* Headers are labels, not data - the UI sans font (instead of the
+       data rows' monospace) makes that distinction clear at a glance. */
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    border-bottom: 2px solid var(--border);
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+#html-truth-table th:first-child { border-top-left-radius: 9px; }
+#html-truth-table th:last-child { border-top-right-radius: 9px; }
+
+/* Visually separate the input variable columns from the derived Out /
+   Minterm columns instead of leaving all columns looking identical */
+#html-truth-table th.tt-out-col,
+#html-truth-table td.output-cell {
+    border-left: 1px solid var(--border);
+}
+
+#html-truth-table td {
+    padding: 9px 20px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-primary);
+    min-width: 20px;
+}
+
+#html-truth-table tbody tr:nth-child(even) td:not(.output-cell) {
+    background-color: rgba(255, 255, 255, 0.015);
+}
+
+#html-truth-table tr:hover td:not(.output-cell) {
+    background-color: rgba(255, 255, 255, 0.035);
+}
+
+#html-truth-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Output cells styling - Reddish for 0, Greenish for 1, Neutral for X */
+.output-cell {
+    cursor: pointer;
+    font-weight: bold;
+    user-select: none;
+    transition: var(--transition-fast);
+}
+
+.output-cell.out-zero {
+    background-color: var(--error-light) !important;
+    color: var(--error) !important;
+}
+
+.output-cell.out-zero:hover {
+    background-color: rgba(239, 68, 68, 0.25) !important;
+}
+
+.output-cell.out-one {
+    background-color: var(--success-light) !important;
+    color: var(--success) !important;
+}
+
+.output-cell.out-one:hover {
+    background-color: rgba(16, 185, 129, 0.25) !important;
+}
+
+.output-cell.out-dontcare {
+    background-color: rgba(148, 163, 184, 0.15) !important;
+    color: var(--text-secondary) !important;
+}
+
+.output-cell.out-dontcare:hover {
+    background-color: rgba(148, 163, 184, 0.25) !important;
+}
+
+/* Waveform Canvas */
+#waveform-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 250px;
+}
+
+/* Verilog Code Panels View */
+#verilog-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    padding: 20px;
+    background-color: var(--bg-primary);
+    z-index: 8;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.code-scroll-wrapper {
+    flex-grow: 1;
+    overflow-y: auto;
+    overflow-x: auto;
+    background: var(--bg-primary);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    padding: 18px;
+    box-sizing: border-box;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    cursor: default;
+}
+
+.code-scroll-wrapper:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.1);
+}
+
+/* Sleek custom scrollbars globally (matches Verilog code boxes) */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+.code-scroll-wrapper pre {
+    margin: 0;
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    cursor: text;
+}
+
+.code-scroll-wrapper code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--text-primary);
+    white-space: pre;
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    cursor: text;
+}
+
+.panel-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* Borderless action links with SVGs and text labels */
+.action-link-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 6px;
+    transition: var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1;
+}
+
+.action-link-btn:hover {
+    color: var(--text-primary);
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+.action-link-btn svg {
+    color: inherit;
+    display: inline-block;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+
+.action-link-btn span {
+    font-family: var(--font-sans);
+    line-height: 1;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* SVG Circuit Diagram Styles */
+#svg-circuit-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    padding: 20px;
+    background-color: var(--bg-primary);
+    z-index: 8;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+#simulation-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    padding: 20px;
+    background-color: var(--bg-primary);
+    z-index: 8;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.circuit-panel {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    box-shadow: var(--shadow-md, 0 4px 6px rgba(0,0,0,0.1));
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.circuit-scroll-wrapper {
+    flex-grow: 1;
+    overflow: hidden;
+    position: relative;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    padding: 0;
+    display: block;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    /* Must be set on the exact pinch-target element, not just an ancestor -
+       iOS Safari can still let native page-zoom engage on the first pinch
+       otherwise, which is what caused the blur (a real native viewport zoom,
+       not a rendering artifact) until something else forced a reflow. */
+    touch-action: none;
+}
+
+.circuit-scroll-wrapper::-webkit-scrollbar {
+    display: none;
+}
+
+.zoom-content-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: 0 0;
+    pointer-events: none;
+}
+
+/* The plain circuit diagram (original/simplified-circuit-scroll) has no SVG
+   filters at all - it's just plain vector strokes - so it deliberately does
+   NOT get the GPU layer-promotion hints below. Forcing a 3D compositing
+   context onto content that doesn't need it was subtly degrading its stroke
+   anti-aliasing (visible as slight pixelation) once scaled down small. */
+#original-sim-scroll .zoom-content-wrapper,
+#simplified-sim-scroll .zoom-content-wrapper {
+    /* Filtered gate shapes (plastic-3d / silkscreen) get rasterized to a bitmap
+       on first paint. Without a promoted layer, pinch-zoom's rapid transform
+       updates just stretch that stale bitmap -> blur. will-change + a 3D
+       transform on every applied frame (see applyZoom in app.js) forces the
+       browser to keep re-rasterizing at the live scale during the gesture. */
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    perspective: 1000px;
+    -webkit-perspective: 1000px;
+}
+
+.zoom-content-wrapper svg {
+    pointer-events: auto;
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.circuit-svg {
+    display: block;
+}
+
+.circuit-wire {
+    fill: none;
+    stroke: var(--text-primary);
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: stroke 0.2s, stroke-width 0.2s;
+}
+
+.circuit-wire:hover {
+    stroke: var(--accent);
+    stroke-width: 4;
+}
+
+.gate-shape {
+    fill: none;
+    stroke: var(--text-primary);
+    stroke-width: 2.5;
+}
+
+.gate-text {
+    font-family: var(--font-family);
+    font-size: 14px;
+    fill: var(--text-primary);
+    font-weight: 600;
+    pointer-events: none;
+}
+
+.var-node {
+    fill: none;
+    stroke: var(--text-primary);
+    stroke-width: 2.5;
+}
+
+.var-text {
+    font-family: var(--font-family);
+    font-size: 16px;
+    font-weight: 700;
+    fill: var(--text-primary);
+    pointer-events: none;
+}
+
+/* Floating Zoom Controls */
+.zoom-controls {
+    position: absolute;
+    bottom: 30px;
+    right: 30px;
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+}
+
+.zoom-btn {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    box-shadow: var(--shadow-sm);
+}
+
+.zoom-btn:hover {
+    background-color: var(--accent-light);
+    color: var(--accent);
+    border-color: rgba(37, 99, 235, 0.3);
+}
+
+.zoom-btn svg {
+    pointer-events: none;
+}
+
+/* Panel Fullscreen Overlay */
+.panel-fs-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: var(--bg-primary);
+    display: flex;
+    flex-direction: column;
+    animation: panelFsIn 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes panelFsIn {
+    from { opacity: 0; transform: scale(0.97); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+.panel-fs-inner {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+}
+
+.panel-fs-scroll-wrapper {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    background: rgba(0, 0, 0, 0.05);
+    touch-action: none;
+}
+
+.panel-fs-controls {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border);
+}
+
+.panel-fs-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    font-size: 18px;
+}
+
+.panel-fs-exit-btn {
+    background: var(--error-light);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: var(--error);
+}
+
+.panel-fs-exit-btn:hover {
+    background: var(--error);
+    color: #fff;
+    border-color: var(--error);
+}
+.kmap-table { border-collapse: collapse; margin: 20px auto; width: auto; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12); }
+.kmap-cell { border: 1px solid var(--border); width: 60px; height: 60px; min-width: 60px; min-height: 60px; text-align: center; vertical-align: middle; cursor: pointer; user-select: none; transition: background 0.2s; font-family: monospace; font-size: 1.2rem; box-sizing: border-box; }  
+@media (hover: hover) and (pointer: fine) {
+    .kmap-cell:hover { background-color: var(--accent-light); }
+}
+.kmap-table th { padding: 10px; font-weight: bold; background: var(--bg-primary); min-width: 60px; height: 60px; text-align: center; vertical-align: middle; box-sizing: border-box; } 
+
+/* Rounded outer corners for the K-map grid. border-collapse merges adjacent
+   cell borders into shared lines, so the radius has to be applied to the
+   four outermost cells themselves (not the <table>) or the collapsed
+   border would still draw a hard square corner underneath the clip. */
+.kmap-table tr:first-child th.kmap-corner { border-top-left-radius: 14px; }
+.kmap-table tr:first-child th:last-child { border-top-right-radius: 14px; }
+.kmap-table tr:last-child th:first-child { border-bottom-left-radius: 14px; }
+.kmap-table tr:last-child td.kmap-cell:last-child { border-bottom-right-radius: 14px; }
+
+.kmap-small { border-radius: 10px; }
+.kmap-small.kmap-table,
+.kmap-small .kmap-table { border-radius: 10px; }
+.kmap-small.kmap-table tr:first-child th.kmap-corner,
+.kmap-small .kmap-table tr:first-child th.kmap-corner { border-top-left-radius: 10px; }
+.kmap-small.kmap-table tr:first-child th:last-child,
+.kmap-small .kmap-table tr:first-child th:last-child { border-top-right-radius: 10px; }
+.kmap-small.kmap-table tr:last-child th:first-child,
+.kmap-small .kmap-table tr:last-child th:first-child { border-bottom-left-radius: 10px; }
+.kmap-small.kmap-table tr:last-child td.kmap-cell:last-child,
+.kmap-small .kmap-table tr:last-child td.kmap-cell:last-child { border-bottom-right-radius: 10px; }
+  
+#kmap-visual-wrapper { position: relative; display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; }  
+#kmap-svg-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; } 
+
+/* 3D KMap CSS — a real WebGL cube lattice, one cube per K-map cell */
+#kmap-3d-container { position: relative; width: 100%; height: 100%; min-height: 380px; }
+
+.kmap-3d-canvas-wrap {
+    width: 100%; height: 100%; min-height: 380px;
+    display: flex; align-items: center; justify-content: center;
+    box-sizing: border-box;
+}
+.kmap-3d-canvas-wrap canvas { display: block; }
+
+.kmap-3d-toolbar { position: absolute; top: 8px; right: 8px; display: flex; gap: 6px; z-index: 50; }
+.kmap-3d-tbtn {
+    width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+    background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text-secondary); cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+@media (hover: hover) and (pointer: fine) {
+    .kmap-3d-tbtn:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+}
+.kmap-3d-tbtn.active { background: var(--accent); color: #fff; border-color: var(--accent-hover); }
+.kmap-3d-tbtn svg { width: 15px; height: 15px; }
+
+.kmap-3d-legend {
+    position: absolute; top: 8px; left: 8px; z-index: 50;
+    display: flex; gap: 12px;
+    background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 6px;
+    padding: 6px 10px; font-size: 0.78em; color: var(--text-secondary);
+}
+.kmap-3d-legend span { display: flex; align-items: center; gap: 5px; }
+.kmap-3d-legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+.kmap-3d-controls { text-align: center; margin-top: 10px; font-size: 0.8em; color: var(--text-secondary); }
+.kmap-3d-controls .ctrl-hint { opacity: 0.85; }
+
+/* K-Map fullscreen toggle - sits bottom-right so it never collides with the
+   3D toolbar (top-right) or legend (top-left) in any view mode. */
+.kmap-panel {
+    position: relative;
+}
+
+.kmap-controls {
+    position: absolute;
+    bottom: 14px;
+    right: 14px;
+    display: flex;
+    gap: 8px;
+    z-index: 55;
+}
+
+.kmap-fs-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.kmap-fs-btn:hover {
+    background: var(--accent-light);
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+.kmap-fs-btn.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent-hover);
+}
+
+.kmap-fs-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Fullscreen state: the K-Map panel expands to cover the viewport so multi-
+   plane K-Maps have real room to breathe, with scrolling for anything that
+   still doesn't fit. */
+.kmap-panel.kmap-panel-fullscreen {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    width: 100vw !important;
+    height: 100dvh !important;
+    max-height: none !important;
+    z-index: 1500;
+    border-radius: 0;
+    overflow: auto;
+}
+
+/* Detach the controls from the scrolling content so they always stay on screen */
+.kmap-panel.kmap-panel-fullscreen .kmap-controls {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 1501;
+}
+
+.kmap-panel.kmap-panel-fullscreen .kmap-fs-btn {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* ── K-Map Analysis Board ─────────────────────────────────────────────────
+   Cards mirror the Solution tab's .qm-section pattern (small uppercase
+   label + colored icon badge) so the K-map tab reads as part of the same
+   product instead of the old ad-hoc inline-styled headers. */
+.kmap-analysis-board { display: flex; flex-direction: column; gap: 12px; }
+
+.kmap-analysis-section {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+}
+
+.kmap-analysis-section[open] .kmap-chevron {
+    transform: rotate(180deg);
+}
+
+.kmap-analysis-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    list-style: none;
+    cursor: pointer;
+    user-select: none;
+}
+
+.kmap-analysis-header::-webkit-details-marker {
+    display: none;
+}
+
+.kmap-analysis-header::marker {
+    content: '';
+}
+
+.kmap-chevron {
+    margin-left: auto;
+    color: var(--text-muted);
+    transition: transform var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.kmap-analysis-body {
+    padding-top: 12px;
+}
+
+.kmap-analysis-title {
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    flex-grow: 1;
+}
+
+.kmap-analysis-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 2px 6px;
+    flex-shrink: 0;
+}
+
+.kmap-analysis-subtitle {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin: -4px 0 10px 0;
+}
+
+.kmap-analysis-empty {
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 12.5px;
+    padding: 2px 0;
+}
+
+.empty-msg {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    min-height: 80px;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-style: italic;
+    text-align: center;
+    padding: 20px;
+}
+
+.term-boxes-container { display: flex; flex-wrap: wrap; gap: 6px; }
+.term-box { display: inline-flex; align-items: center; justify-content: center; padding: 4px 9px; border-radius: 6px; background: var(--bg-tertiary); border: 1px solid var(--border); font-family: 'Fira Code', monospace; font-size: 12.5px; font-weight: 600; color: var(--text-primary); }
+.kmap-analysis-section .term-box { background: var(--bg-primary); }
+
+/* Analysis board: Minimal Expression + Essential Prime Implicant boxes are
+   clickable — selecting one filters the K-map (every view mode) down to
+   just that implicant's group, using the same color the box already has. */
+.term-box.selectable-implicant {
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+.term-box.selectable-implicant:hover {
+    transform: translateY(-1px);
+}
+.term-box.selectable-implicant.selected {
+    box-shadow: 0 0 0 2px currentColor, 0 2px 8px rgba(0, 0, 0, 0.25);
+    font-weight: 700;
+}
+.term-box.selectable-implicant.dimmed {
+    opacity: 0.35;
+}
+
+.kmap-plane-wrapper { display: flex; flex-direction: column; align-items: center; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border); border-radius: 8px; padding: 12px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); }
+
+.kmap-small .kmap-cell, .kmap-small .kmap-table th { width: 45px; height: 45px; font-size: 14px; padding: 0; }
+.kmap-small .kmap-plane-wrapper { padding: 8px; margin: 0; }
+.kmap-small .kmap-table th { width: 40px; height: 40px; font-size: 12px; }
+
+.kmap-table th.kmap-corner, .kmap-corner { 
+    position: relative; 
+    z-index: 3;
+    min-width: 50px; 
+    height: 50px; 
+    padding: 0; 
+    box-sizing: border-box; 
+    background: var(--bg-primary) !important; 
+    overflow: hidden;
+}
+
+.kmap-corner-col { 
+    position: absolute; 
+    top: 6px; 
+    left: 24px; 
+    font-size: 0.9em; 
+    font-weight: bold; 
+    line-height: 1; 
+    text-align: left; 
+    z-index: 2;
+}
+
+.kmap-corner-row { 
+    position: absolute; 
+    bottom: 4px; 
+    left: 6px; 
+    font-size: 0.9em; 
+    font-weight: bold; 
+    line-height: 1; 
+    text-align: left; 
+    z-index: 2;
+}
+.kmap-table tr:first-child th:not(.kmap-corner) { 
+    vertical-align: bottom; 
+    padding-bottom: 2px; 
+    height: 40px; 
+    box-sizing: border-box; 
+}
+
+.kmap-table tr:not(:first-child) th { 
+    text-align: right; 
+    padding-right: 4px; 
+    width: 40px; 
+    box-sizing: border-box; 
+}
+
+.kmap-table th { font-size: 1em; font-weight: normal; color: var(--text-secondary); min-width: 30px; }
+.kmap-cell { position: relative; width: 80px; height: 80px; min-width: 80px; min-height: 80px; font-size: 32px; font-weight: 500; text-align: center; vertical-align: middle; }
+.kmap-cell.val-0 { color: #ff453a !important; }
+.kmap-cell.val-1 { color: #30d158 !important; }
+.kmap-cell.val-X { color: #8e8e93 !important; }
+.kmap-minterm-label { position: absolute; top: 3px; left: 4px; font-size: 12px; color: var(--text-muted); opacity: 0.7; pointer-events: none; font-weight: normal; }
+
+/* Algebraic Solution Styles */
+.solution-panel { padding: 18px; overflow-y: hidden; display: flex; flex-direction: column; min-height: 0; }
+.solution-content-wrapper { padding: 14px; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border); line-height: 1.6; color: var(--text-primary); overflow-y: auto; flex: 1; min-height: 0; }
+.solution-empty { color: var(--text-muted); font-style: italic; }
+
+.solution-split-view {
+    display: flex;
+    gap: 20px;
+    height: 100%;
+    width: 100%;
+}
+
+/* Hide the toggle bar on Desktop */
+.mobile-bottom-tabs {
+    display: none;
+    flex-shrink: 0;
+    width: 100%;
+    height: 44px;
+    margin-top: 12px;
+}
+
+/* No algebraic proof to switch to - there's nothing to toggle between, so
+   the tab bar (and its "Algebraic Proof" pill) is hidden outright. When the
+   tab bar is hidden on mobile, CSS overrides panel visibility directly
+   instead of relying on JS to change data-active-tab (which caused the
+   mid-typing auto-switch bug). */
+#solution-mobile-tabs.alg-unavailable {
+    display: none !important;
+}
+
+/* On mobile, when alg is unavailable, always show QM regardless of
+   data-active-tab so the user sees something useful even if JS hasn't
+   updated the tab state yet. Only applies inside the mobile breakpoint
+   where the two panels are mutually exclusive. */
+@media (max-width: 768px) {
+    #solution-split-view:has(~ #solution-mobile-tabs.alg-unavailable) #panel-alg {
+        display: none !important;
+    }
+    #solution-split-view:has(~ #solution-mobile-tabs.alg-unavailable) #panel-qm {
+        display: flex !important;
+    }
+}
+
+.mobile-bottom-tabs .pill-toggle {
+    width: 100%;
+}
+
+/* Higher specificity than the generic ".pill-toggle .pill-option" compact
+   override further down (meant for the SOP/POS and theme pills) — without
+   this, "Algebraic Proof" / "Quine-McCluskey" were being silently shrunk to
+   10.5px (9.5px under 480px) instead of the size intended here, since that
+   generic rule wins any tie by being declared later. */
+.mobile-bottom-tabs .pill-toggle .pill-option {
+    flex: 1;
+    font-size: 12.5px;
+    padding: 6px 6px;
+    white-space: nowrap;
+    letter-spacing: -0.01em;
+}
+
+.solution-split-view > .solution-panel {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+}
+
+/* K-Map panel with no header — let the visual area use the full card */
+.kmap-panel-noheader { padding: 12px; }
+.kmap-panel-noheader #kmap-visual-wrapper { flex: 1; min-height: 0; }
+
+/* Wrap view: the loop-group SVG overlay is larger than the visible viewport
+   (it draws into off-screen tiles that get scrolled into view via transform).
+   Without overflow:visible, anything outside the initial box gets clipped
+   and the group boxes silently fail to render once you pan. */
+#kmap-wrap-svg-overlay { overflow: visible; }
+
+/* Algebraic Proof Steps
+   Expression and reason are stacked on their own lines rather than sharing
+   one flex row - a long expression can wrap freely on any width without
+   ever crowding, colliding with, or reflowing under the reason pill. */
+.algebraic-step {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 12px 8px;
+    border-bottom: 1px solid var(--border);
+    margin: 0;
+}
+
+.algebraic-step:last-child {
+    border-bottom: none;
+}
+
+.algebraic-step:hover {
+    background-color: var(--bg-primary);
+}
+
+.alg-expr {
+    font-family: 'STIX Two Text', 'Outfit', serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: 0.01em;
+    width: 100%;
+}
+
+.alg-reason {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    align-self: flex-end;
+    margin-left: 0;
+    flex-shrink: 0;
+}
+
+.alg-by {
+    font-family: 'Outfit', sans-serif;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.alg-rule {
+    font-family: 'Outfit', sans-serif;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    background: transparent;
+    border: none;
+    padding: 0;
+}
+
+/* ==========================================================================
+   Mobile / Responsive Enhancements
+   Auto-detected via @media queries — no manual toggle needed.
+   ========================================================================== */
+
+/* Smaller pill toggles (Theme changer + SOP/POS) at every screen size */
+.pill-toggle {
+    padding: 2px;
+    border-radius: 16px;
+}
+
+.pill-toggle .pill-option {
+    font-size: 10.5px;
+    padding: 5px 12px;
+    border-radius: 14px;
+}
+
+.pill-toggle .pill-slider {
+    border-radius: 14px;
+}
+
+.theme-toggle .pill-option {
+    padding: 5px 9px;
+}
+
+.theme-toggle .pill-option svg {
+    width: 12px;
+    height: 12px;
+}
+
+/* Let native touch-scrolling work inside internally-scrollable regions,
+   overriding the app-wide touch-action:none used for canvas/circuit gestures */
+.table-scroll-wrapper,
+.wave-scroll-wrapper,
+.code-scroll-wrapper,
+.circuit-scroll-wrapper,
+.solution-content-wrapper,
+.kmap-solutions-wrapper,
+#kmap-implicants-list,
+#empty-state,
+.modal-body,
+.draggable-carousel,
+#sidebar {
+    touch-action: pan-x pan-y; /* Allow horizontal swiping */
+}
+
+/* ==========================================================================
+   Tablet & Mobile Breakpoint (auto-detected)
+   ========================================================================== */
+@media (max-width: 900px) {
+
+    /* --- App shell: sidebar becomes a bar docked under the workspace --- */
+    #app-root,
+    #app-root.sidebar-expanded {
+        /* minmax(0, 1fr), not a bare 1fr - see the base #app-root rule for
+           why a plain 1fr track refuses to shrink below its content's
+           min-content width.
+           Three explicit rows now (header / workspace / bottom bar) - a
+           previous two-row version left #topbar on its base grid-row:1
+           with #main-workspace ALSO pinned to row 1 below, so the two
+           silently shared one grid cell: the workspace's full-height
+           glass-panel background rendered behind/around the header's
+           actual content instead of below it. */
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr) auto;
+    }
+
+    #app-root:not(.landing):not(.showing-examples) #topbar {
+        grid-row: 1;
+    }
+
+    #app-root.landing,
+    #app-root.showing-examples {
+        grid-template-rows: 100%;
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    #app-root:not(.landing):not(.showing-examples) #main-workspace {
+        grid-column: 1;
+        grid-row: 2;
+    }
+
+    #sidebar {
+        grid-column: 1;
+        grid-row: 3;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 60px;
+        padding: 0 6px;
+        border-right: none;
+        border-top: 1px solid var(--border);
+        overflow-x: auto;
+        overflow-y: hidden;
+    }
+
+    /* The hamburger/expand affordance and version footer don't apply once
+       the sidebar has collapsed into a compact bottom bar */
+    #sidebar .sidebar-header,
+    #sidebar .sidebar-footer {
+        display: none;
+    }
+
+    #sidebar .nav-links {
+        flex-direction: row;
+        flex-grow: 0;
+        width: auto;
+        gap: 4px;
+        padding: 0;
+    }
+
+    #sidebar .nav-btn {
+        width: 48px;
+        height: 48px;
+        flex-shrink: 0;
+    }
+
+    #sidebar .nav-btn .tooltip {
+        display: none !important;
+    }
+
+    /* --- Header: logo + both toggles share line 1, input is its own
+       full-width line 2. .topbar-search-area and .input-row are collapsed
+       with display:contents so their children (logo, toggles, input,
+       result/error rows) become direct flex items of #topbar itself —
+       no HTML changes needed to reorder across the old nesting. --- */
+    #topbar {
+        padding: 8px 10px;
+        flex-wrap: wrap;
+        align-items: center;
+        column-gap: 8px;
+        row-gap: 8px;
+    }
+
+    /* Scoped to the active workspace only — the landing/empty-state screen
+       has its own centered column layout (handled elsewhere) and must not
+       be affected by this restructuring. */
+    #app-root:not(.landing):not(.showing-examples) #topbar .topbar-search-area,
+    #app-root:not(.landing):not(.showing-examples) #topbar .input-row {
+        display: contents;
+    }
+
+    #app-root:not(.landing):not(.showing-examples) #hero-logo-wrap {
+        order: 1;
+        flex-shrink: 0;
+        margin-bottom: 0;
+    }
+
+    #app-root:not(.landing):not(.showing-examples) .topbar-actions {
+        order: 2;
+        margin-left: auto;
+        gap: 8px;
+    }
+
+    #app-root:not(.landing):not(.showing-examples) .input-wrapper {
+        order: 3;
+        flex: 1 1 100%;
+        width: 100%;
+    }
+
+    #app-root:not(.landing):not(.showing-examples) #result-row {
+        order: 4;
+        flex: 1 1 100%;
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    #app-root:not(.landing):not(.showing-examples) #error-feedback {
+        order: 5;
+        flex: 1 1 100%;
+    }
+
+    #hero-logo {
+        width: 40px;
+        height: 40px;
+    }
+
+    /* --- Landing screen scales down --- */
+    #app-root.landing #hero-logo-wrap {
+        margin-bottom: 20px;
+    }
+
+    #app-root.landing #hero-logo {
+        width: 140px;
+        height: 140px;
+    }
+
+    /* On desktop these pills float at a fixed corner of the screen, out of
+       the way of the centered search bar. On a phone that corner placement
+       reads as disconnected/floating and can crowd the edge of the screen
+       (or the logo, on short/landscape viewports) - bring them back into
+       normal flow as a small centered row under the search bar instead.
+       input-row stays a flex row (for the active-workspace layout above),
+       so it needs to wrap for topbar-actions to actually land on its own
+       line rather than squeezing in beside the input. */
+    #app-root.landing .input-row {
+        flex-wrap: wrap;
+    }
+
+    #app-root.landing .topbar-actions {
+        position: static;
+        flex: 1 0 100%;
+        margin-top: 14px;
+        justify-content: center;
+    }
+
+    /* Landing centers its content vertically via flexbox with no scroll
+       fallback - on a short viewport (landscape phones, or a phone
+       keyboard eating half the screen) that silently clips content at
+       the top/bottom instead of letting the user scroll to it. */
+    #app-root.landing #main-workspace {
+        overflow-y: auto;
+        padding: 24px 16px;
+    }
+
+    .empty-state-examples {
+        grid-template-columns: 1fr;
+        gap: 28px;
+    }
+
+    #empty-state {
+        padding: 20px;
+    }
+
+    /* --- All 2-panel horizontal layouts become 2 stacked vertical panels --- */
+    #truthtable-container,
+    #svg-circuit-container,
+    #simulation-container,
+    #verilog-container {
+        grid-template-columns: 1fr !important;
+        grid-template-rows: 1fr 1fr;
+        gap: 12px;
+        padding: 12px;
+        overflow-y: auto;
+    }
+
+    /* Grid items default to min-height:auto, which is their content's
+       intrinsic minimum - not 0. The waveform canvas below has a fixed
+       min-height, and without this override that min-height bubbles all
+       the way up through the flex chain and inflates this panel's grid
+       row past its fair 1fr share, breaking the equal split and pushing
+       the whole container into an unwanted scroll. */
+    #truthtable-container > .tt-panel,
+    #truthtable-container > .wave-panel,
+    #svg-circuit-container > .circuit-panel,
+    #simulation-container > .circuit-panel,
+    #verilog-container > .verilog-panel {
+        min-height: 0;
+    }
+
+    #html-truth-table {
+        min-width: 0;
+        font-size: 12px;
+    }
+
+    #html-truth-table th {
+        padding: 8px 12px;
+        font-size: 9.5px;
+    }
+
+    #html-truth-table td {
+        padding: 7px 12px;
+    }
+
+    /* When there's no original circuit/simulation to show (only the
+       simplified side), the hidden panel shouldn't leave an empty row
+       behind - let the visible panel use the full height. */
+    #svg-circuit-container.single-panel-view,
+    #simulation-container.single-panel-view {
+        grid-template-rows: 1fr;
+    }
+
+    /* The waveform's own layout logic (renderHTMLWaveform) fits everything
+       to whatever space the canvas actually gets, so it doesn't need a
+       large reserved minimum on small screens - the desktop-sized 250px
+       floor was forcing this panel to overflow its half of a mobile
+       screen. */
+    #waveform-canvas {
+        min-height: 140px;
+    }
+
+    /* Unlike desktop, mobile keeps a 40px-per-signal floor in JS to avoid
+       unreadably squished rows, so the canvas can still legitimately grow
+       past the wrapper here - restore scrolling for that case. */
+    .wave-scroll-wrapper {
+        overflow-y: auto;
+    }
+
+    /* Smaller Verilog code font so more of each line fits on screen */
+    .code-scroll-wrapper code {
+        font-size: 11.5px;
+        line-height: 1.5;
+    }
+
+    /* The top "solution" carousel was reserving 300px for the desktop
+       sidebar even though mobile's sidebar docks under the workspace
+       instead of beside it - that made the carousel (and the solution
+       cards inside it) far too narrow and cropped on the right edge. */
+    .draggable-carousel {
+        max-width: 100%;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .solution-split-view {
+        flex-direction: column;
+        gap: 12px;
+        flex: 1;
+        min-height: 0;
+    }
+
+    #solution-container {
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Show tabs and dynamically hide the inactive panel */
+    .mobile-bottom-tabs {
+        display: flex;
+    }
+
+    #solution-split-view[data-active-tab="alg"] #panel-qm,
+    #solution-split-view[data-active-tab="qm"] #panel-alg {
+        display: none !important;
+    }
+
+    /* Mobile K-Map container */
+    #kmap-container {
+        display: grid;
+        grid-template-columns: 1fr;
+        /* Flat 50/50 split, same pattern as #truthtable-container above -
+           each row gets exactly half the container no matter how much (or
+           how little) content is inside it. This is also what makes the
+           board and analysis card render at all on mobile: 1fr is a
+           DEFINITE size the moment the container's own height is known, so
+           height:100% on the descendants below (visual wrapper, grid/svg)
+           has something real to resolve against instead of collapsing to
+           0 while waiting on content that itself waits on a resolved
+           height (the old fit-content(50%) row created exactly that
+           circular dependency). */
+        grid-template-rows: 1fr 1fr;
+        gap: 12px;
+        padding: 12px;
+        overflow-y: auto;
+    }
+
+    /* K-Map visual box: exactly fills whatever height row 1 resolved to
+       above. overflow:hidden (not auto/scroll) is deliberate - the board
+       never shows a scrollbar because renderHTMLKMap()/render2DKMap()
+       measure this box's actual rendered size and transform:scale() the
+       table down to fit inside it, so nothing should ever need to
+       overflow in the first place. */
+    #kmap-container .kmap-panel {
+        height: 100%;
+        min-height: 120px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Analysis panel takes remaining space */
+    #kmap-container .kmap-analysis-panel {
+        height: 100%;
+        min-height: 200px;
+        overflow-y: auto;
+    }
+
+    .kmap-panel-noheader #kmap-visual-wrapper {
+        width: 100%;
+        height: 100%;
+        min-height: 100px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .kmap-solutions-wrapper {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+    }
+
+    .kmap-analysis-section {
+        padding: 11px;
+        border-radius: 9px;
+    }
+
+    .kmap-analysis-board {
+        gap: 10px;
+    }
+
+    /* Tighter panel chrome to fit small screens */
+    .tt-panel, .wave-panel, .verilog-panel, .kmap-panel, .kmap-analysis-panel,
+    .solution-panel, .circuit-panel {
+        padding: 12px;
+        border-radius: 12px;
+    }
+
+    .panel-header h2 {
+        font-size: 15px;
+    }
+
+    .zoom-controls {
+        bottom: 14px;
+        right: 14px;
+    }
+}
+
+/* ==========================================================================
+   Small Phones
+   ========================================================================== */
+@media (max-width: 480px) {
+    #topbar {
+        padding: 6px 8px;
+    }
+
+    .topbar-search-area {
+        margin-left: 6px;
+        margin-right: 4px;
+    }
+
+    .pill-toggle .pill-option {
+        font-size: 9.5px;
+        padding: 4px 9px;
+    }
+
+    .mobile-bottom-tabs .pill-toggle .pill-option {
+        font-size: 11px;
+        padding: 5px 4px;
+    }
+
+    .theme-toggle .pill-option {
+        padding: 4px 7px;
+    }
+
+    .theme-toggle .pill-option svg {
+        width: 11px;
+        height: 11px;
+    }
+
+    #sidebar .nav-btn {
+        width: 42px;
+        height: 42px;
+    }
+
+    #sidebar .nav-btn svg {
+        width: 19px;
+        height: 19px;
+    }
+
+    #app-root.landing #hero-logo {
+        width: 100px;
+        height: 100px;
+    }
+
+    .empty-card-header h2 {
+        font-size: 20px;
+    }
+
+    .modal {
+        width: 94%;
+        height: 86%;
+    }
+
+    /* Compress the Learn Formats table on small phones */
+    .guide-table {
+        font-size: 11px;
+    }
+    
+    .guide-table th, .guide-table td {
+        padding: 8px 6px;
+    }
+    
+    .guide-table code {
+        font-size: 9.5px;
+        padding: 2px 4px;
+        letter-spacing: -0.3px;
+    }
+}
+
+/* ==========================================================================
+   Dark Mode K-Map Color Swap
+   ========================================================================== */
+body:not(.light-mode) .kmap-table th {
+    background: var(--bg-secondary);
+}
+
+body:not(.light-mode) .kmap-table th.kmap-corner,
+body:not(.light-mode) .kmap-corner,
+body:not(.light-mode) #wrap-top-header,
+body:not(.light-mode) #wrap-left-header {
+    background: var(--bg-secondary) !important;
+}
+
+body:not(.light-mode) .kmap-cell {
+    background-color: var(--bg-primary);
+}
+
+/* Ensure hover effect is maintained for the new cell color */
+@media (hover: hover) and (pointer: fine) {
+    body:not(.light-mode) .kmap-cell:hover {
+        background-color: var(--accent-light);
+    }
+}
