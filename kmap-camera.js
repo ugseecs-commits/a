@@ -28,10 +28,13 @@
     let state = 'idle'; // idle | scanning | processing | review
     let tesseractWorker = null;
 
-    let manualSizeOverride = null; // {rows, cols} or null = auto-detect
+    let manualSizeOverride = { rows: 4, cols: 4 }; // always set now — matches the preselected "4 Var" button
     let stabilityHistory = [];     // recent {rows, cols, cx, cy, w} for lock detection
+    let missStreak = 0;            // consecutive frames where no grid was found at all
     const STABILITY_FRAMES = 7;
-    const STABILITY_POS_TOL = 18;  // px, allowed centroid jitter
+    const STABILITY_POS_TOL_RATIO = 0.05; // allowed centroid jitter, as a fraction of grid width
+    const STABILITY_POS_TOL_MIN = 22;     // px floor, so small/far-away grids aren't overly strict
+    const MAX_MISS_STREAK = 4;     // grace period (frames) before a lost detection resets progress
 
     let reviewRows = 0, reviewCols = 0;
     let reviewValues = [];  // { val: '0'|'1'|'X'|'', auto: bool, lowConf: bool }
@@ -102,6 +105,7 @@
 
     function beginScanning() {
         stabilityHistory = [];
+        missStreak = 0;
         state = 'scanning';
         statusMsg.innerText = 'Point camera at a K-Map...';
         setProgress(0);
@@ -116,6 +120,7 @@
         proceedBtn.style.display = 'none';
         rescanBtn.style.display = 'none';
         stabilityHistory = [];
+        missStreak = 0;
         setProgress(0);
         if (video.srcObject) {
             state = 'scanning';
@@ -132,13 +137,10 @@
             sizeRow.querySelectorAll('.kmap-size-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             const preset = btn.getAttribute('data-size');
-            if (preset === 'auto') {
-                manualSizeOverride = null;
-            } else {
-                const [r, c] = preset.split('x').map(Number);
-                manualSizeOverride = { rows: r, cols: c };
-            }
+            const [r, c] = preset.split('x').map(Number);
+            manualSizeOverride = { rows: r, cols: c };
             stabilityHistory = [];
+            missStreak = 0;
             setProgress(0);
         });
     });
@@ -278,7 +280,15 @@
                 cv.warpPerspective(thresh, warped, M, new cv.Size(TARGET_WARP_SIZE, TARGET_WARP_SIZE));
 
                 let { hPos, vPos } = detectGridLines(warped);
-                let gridCheck = manualSizeOverride || getGridSizeFromLines(hPos, vPos);
+                // Since the person always tells us which grid size to expect
+                // now (2/3/4 Var — no more Auto), don't just trust any
+                // 4-cornered shape. Require the detected internal lines to
+                // actually match that size. If a header/label outside the
+                // real grid got swept into the outer contour, the line count
+                // here won't line up with the expected size and this
+                // candidate gets rejected outright rather than accepted and
+                // cropped wrong.
+                let gridCheck = validateExpectedGrid(manualSizeOverride, hPos, vPos);
                 if (gridCheck) {
                     // The outer contour is only a rough locator — it commonly
                     // overshoots into header text/labels above or beside the
@@ -301,15 +311,23 @@
         ctx.clearRect(0, 0, overlay.width, overlay.height);
 
         if (bestQuad && bestGridParams) {
+            missStreak = 0;
             drawOverlay(ctx, bestGridParams);
             trackStability(bestGridParams);
             bestQuad.delete();
         } else {
-            stabilityHistory = [];
-            setProgress(0);
-            statusMsg.innerText = manualSizeOverride
-                ? `Looking for a ${manualSizeOverride.rows}x${manualSizeOverride.cols} grid...`
-                : 'Looking for a K-Map grid...';
+            // A single dropped frame (motion blur, brief glare, a hand
+            // wobble) shouldn't throw away progress that's nearly locked.
+            // Only reset once the grid has genuinely been lost for a
+            // short run of consecutive frames.
+            missStreak++;
+            if (missStreak > MAX_MISS_STREAK) {
+                stabilityHistory = [];
+                setProgress(0);
+                statusMsg.innerText = manualSizeOverride
+                    ? `Looking for a ${manualSizeOverride.rows}x${manualSizeOverride.cols} grid...`
+                    : 'Looking for a K-Map grid...';
+            }
         }
 
         contours.delete(); hierarchy.delete(); kernel.delete();
@@ -362,10 +380,11 @@
         let ok = stabilityHistory.length === STABILITY_FRAMES;
         if (ok) {
             const first = stabilityHistory[0];
+            const posTol = Math.max(STABILITY_POS_TOL_MIN, first.w * STABILITY_POS_TOL_RATIO);
             for (const h of stabilityHistory) {
                 if (h.rows !== first.rows || h.cols !== first.cols) { ok = false; break; }
-                if (Math.hypot(h.cx - first.cx, h.cy - first.cy) > STABILITY_POS_TOL) { ok = false; break; }
-                if (Math.abs(h.w - first.w) > first.w * 0.15) { ok = false; break; }
+                if (Math.hypot(h.cx - first.cx, h.cy - first.cy) > posTol) { ok = false; break; }
+                if (Math.abs(h.w - first.w) > first.w * 0.2) { ok = false; break; }
             }
         }
 
@@ -434,7 +453,46 @@
         vKernel.delete(); vLines.delete();
         gridOnly.delete();
 
+        // The coarse outer contour is only a rough locator, so it commonly
+        // overshoots and swallows a header/label strip above or beside the
+        // grid (e.g. row/column value labels). That strip's border shows up
+        // here as one extra line whose gap to its neighbour is much smaller
+        // than the real, uniform cell spacing. Drop those outliers so they
+        // never get counted as a real grid line — otherwise the row/col
+        // count is thrown off and the true grid ends up cropped.
+        hPos = trimOutlierLines(hPos);
+        vPos = trimOutlierLines(vPos);
+
         return { hPos, vPos };
+    }
+
+    // Removes leading/trailing lines whose gap to the next line is far
+    // smaller than the median spacing of the rest — a sign that line is a
+    // stray header/label divider rather than a genuine grid boundary.
+    function trimOutlierLines(positions) {
+        if (positions.length < 3) return positions;
+        let trimmed = positions.slice();
+
+        function medianGap(arr) {
+            let gaps = [];
+            for (let i = 1; i < arr.length; i++) gaps.push(arr[i] - arr[i - 1]);
+            gaps.sort((a, b) => a - b);
+            return gaps[Math.floor(gaps.length / 2)];
+        }
+
+        while (trimmed.length > 2) {
+            let med = medianGap(trimmed);
+            let leadGap = trimmed[1] - trimmed[0];
+            if (leadGap < med * 0.5) { trimmed.shift(); continue; }
+            break;
+        }
+        while (trimmed.length > 2) {
+            let med = medianGap(trimmed);
+            let trailGap = trimmed[trimmed.length - 1] - trimmed[trimmed.length - 2];
+            if (trailGap < med * 0.5) { trimmed.pop(); continue; }
+            break;
+        }
+        return trimmed;
     }
 
     function verifyLineUniformity(positions, size) {
@@ -450,17 +508,21 @@
         return true;
     }
 
-    function getGridSizeFromLines(hPos, vPos) {
+    // The person now always tells us the expected grid size (2/3/4 Var), so
+    // rather than guessing rows/cols from the line count, we confirm the
+    // detected lines actually match that size. A genuine NxM grid has
+    // exactly N+1 horizontal lines and M+1 vertical lines; anything else
+    // (an outside label/line swept into the outer contour, a partly
+    // occluded border, etc.) fails the match and this candidate is skipped.
+    function validateExpectedGrid(expected, hPos, vPos) {
+        if (!expected) return null;
         const size = TARGET_WARP_SIZE;
         if (!verifyLineUniformity(hPos, size) || !verifyLineUniformity(vPos, size)) return null;
-
-        let cols = (hPos.length >= 5) ? 4 : 2;
-        let rows = (vPos.length >= 5) ? 4 : 2;
-        if (cols > 4) cols = 4;
-        if (rows > 4) rows = 4;
-
-        return { rows, cols };
+        if (hPos.length !== expected.cols + 1) return null;
+        if (vPos.length !== expected.rows + 1) return null;
+        return expected;
     }
+
 
     // Snaps the rough contour corners to the true outer grid-line
     // intersections. The coarse quad only needs to roughly contain the
@@ -627,12 +689,17 @@
                 // Truly blank cell: apply the convention guess if we have one,
                 // still flagged gold since it's inferred, not read.
                 results.push({ val: fillVal, auto: fillVal !== '', lowConf: fillVal !== '' });
-            } else if (!['0', '1', 'X'].includes(val) || confidence < CONF_THRESHOLD) {
-                // Had ink, but we're not confident what it says — leave blank
-                // and flag it rather than asserting a possibly-wrong digit.
+            } else if (!['0', '1', 'X'].includes(val)) {
+                // OCR produced nothing usable at all — there's genuinely no
+                // guess to offer, so this is the one case left blank for
+                // the user to fill in.
                 results.push({ val: '', auto: false, lowConf: true });
             } else {
-                results.push({ val, auto: false, lowConf: false });
+                // We got a plausible reading. Always take it as the best
+                // guess rather than making the user type it — cells below
+                // the confidence bar are just flagged gold (low-confidence)
+                // so they're easy to spot and double-check.
+                results.push({ val, auto: false, lowConf: confidence < CONF_THRESHOLD });
             }
         }
 
