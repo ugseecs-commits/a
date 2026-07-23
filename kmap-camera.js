@@ -30,11 +30,11 @@
 
     let manualSizeOverride = { rows: 4, cols: 4 }; // always set now — matches the preselected "4 Var" button
     let stabilityHistory = [];     // recent {rows, cols, cx, cy, w} for lock detection
-    let missStreak = 0;            // consecutive frames where no grid was found at all
+    let lastLockedTime = 0;        // timestamp of the last frame where a valid grid was found
     const STABILITY_FRAMES = 7;
     const STABILITY_POS_TOL_RATIO = 0.05; // allowed centroid jitter, as a fraction of grid width
     const STABILITY_POS_TOL_MIN = 22;     // px floor, so small/far-away grids aren't overly strict
-    const MAX_MISS_STREAK = 4;     // grace period (frames) before a lost detection resets progress
+    const MISS_GRACE_MS = 1400;    // grace period (ms) before a lost detection resets progress
 
     let reviewRows = 0, reviewCols = 0;
     let reviewValues = [];  // { val: '0'|'1'|'X'|'', auto: bool, lowConf: bool }
@@ -105,7 +105,7 @@
 
     function beginScanning() {
         stabilityHistory = [];
-        missStreak = 0;
+        lastLockedTime = 0;
         state = 'scanning';
         statusMsg.innerText = 'Point camera at a K-Map...';
         setProgress(0);
@@ -120,7 +120,7 @@
         proceedBtn.style.display = 'none';
         rescanBtn.style.display = 'none';
         stabilityHistory = [];
-        missStreak = 0;
+        lastLockedTime = 0;
         setProgress(0);
         if (video.srcObject) {
             state = 'scanning';
@@ -140,7 +140,7 @@
             const [r, c] = preset.split('x').map(Number);
             manualSizeOverride = { rows: r, cols: c };
             stabilityHistory = [];
-            missStreak = 0;
+            lastLockedTime = 0;
             setProgress(0);
         });
     });
@@ -311,17 +311,19 @@
         ctx.clearRect(0, 0, overlay.width, overlay.height);
 
         if (bestQuad && bestGridParams) {
-            missStreak = 0;
+            lastLockedTime = performance.now();
             drawOverlay(ctx, bestGridParams);
             trackStability(bestGridParams);
             bestQuad.delete();
         } else {
-            // A single dropped frame (motion blur, brief glare, a hand
-            // wobble) shouldn't throw away progress that's nearly locked.
-            // Only reset once the grid has genuinely been lost for a
-            // short run of consecutive frames.
-            missStreak++;
-            if (missStreak > MAX_MISS_STREAK) {
+            // A dropped frame or two — motion blur, brief glare, the camera
+            // wobbling as a hand moves — shouldn't throw away progress
+            // that's nearly locked. Only reset once the grid has genuinely
+            // been unreadable for a real stretch of time, not just a few
+            // frames (frame timing varies a lot under load, so a small
+            // frame counter got exhausted almost instantly during motion).
+            let sinceLock = performance.now() - lastLockedTime;
+            if (stabilityHistory.length === 0 || sinceLock > MISS_GRACE_MS) {
                 stabilityHistory = [];
                 setProgress(0);
                 statusMsg.innerText = manualSizeOverride
