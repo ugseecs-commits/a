@@ -107,14 +107,14 @@
     function getGridSizeRobust(warpedThresh) {
         let size = TARGET_WARP_SIZE;
         
-        function getIntersections(isRow, pos) {
+        function getIntersections(isRow, pos, matToScan) {
             let positions = [];
             let inLine = false;
             let lineStart = 0;
-            let ptr = isRow ? warpedThresh.ucharPtr(pos) : null;
+            let ptr = isRow ? matToScan.ucharPtr(pos) : null;
             
             for (let i = 0; i < size; i++) {
-                let val = isRow ? ptr[i] : warpedThresh.ucharPtr(i, pos)[0];
+                let val = isRow ? ptr[i] : matToScan.ucharPtr(i, pos)[0];
                 if (val > 128) {
                     if (!inLine) { inLine = true; lineStart = i; }
                 } else {
@@ -128,9 +128,27 @@
             return positions;
         }
         
-        // Sample at 50%
-        let hPos = getIntersections(true, Math.floor(size * 0.5));
-        let vPos = getIntersections(false, Math.floor(size * 0.5));
+        // Apply Morph Open to erase all text/noise and keep only long, solid grid lines!
+        let kernelSize = Math.floor(size / 8); // ~50 pixels. Text is smaller than 50px, so it vanishes.
+        
+        let hKernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(kernelSize, 1));
+        let hLines = new cv.Mat();
+        cv.morphologyEx(warpedThresh, hLines, cv.MORPH_OPEN, hKernel);
+        
+        let vKernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(1, kernelSize));
+        let vLines = new cv.Mat();
+        cv.morphologyEx(warpedThresh, vLines, cv.MORPH_OPEN, vKernel);
+        
+        let gridOnly = new cv.Mat();
+        cv.add(hLines, vLines, gridOnly);
+        
+        // Sample at 50% on the noise-free grid
+        let hPos = getIntersections(true, Math.floor(size * 0.5), gridOnly);
+        let vPos = getIntersections(false, Math.floor(size * 0.5), gridOnly);
+        
+        hKernel.delete(); hLines.delete();
+        vKernel.delete(); vLines.delete();
+        gridOnly.delete();
         
         function verifyUniformity(positions) {
             if (positions.length < 3) return false;
