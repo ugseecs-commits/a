@@ -277,10 +277,17 @@
                 let warped = new cv.Mat();
                 cv.warpPerspective(thresh, warped, M, new cv.Size(TARGET_WARP_SIZE, TARGET_WARP_SIZE));
 
-                let gridCheck = manualSizeOverride || getGridSizeRobust(warped);
+                let { hPos, vPos } = detectGridLines(warped);
+                let gridCheck = manualSizeOverride || getGridSizeFromLines(hPos, vPos);
                 if (gridCheck) {
+                    // The outer contour is only a rough locator — it commonly
+                    // overshoots into header text/labels above or beside the
+                    // grid. Re-derive the true corners from the detected grid
+                    // LINES (text is erased by the line-isolation morphology),
+                    // so cell math lines up with the real borders.
+                    let refinedPts = refineCorners(sortedPts, hPos, vPos, TARGET_WARP_SIZE);
                     bestQuad = approx.clone();
-                    bestGridParams = { pts: sortedPts, rows: gridCheck.rows, cols: gridCheck.cols };
+                    bestGridParams = { pts: refinedPts, rows: gridCheck.rows, cols: gridCheck.cols };
                     srcTri.delete(); dstTri.delete(); M.delete(); warped.delete();
                     break;
                 }
@@ -381,7 +388,10 @@
         if (progressBar) progressBar.style.width = `${Math.round(Math.min(1, Math.max(0, frac)) * 100)}%`;
     }
 
-    function getGridSizeRobust(warpedThresh) {
+    // Isolates only long, solid grid lines (morph-open erases thin text/noise
+    // shorter than ~size/8 px) and returns the x-positions of vertical lines
+    // (hPos) and y-positions of horizontal lines (vPos) inside the warp.
+    function detectGridLines(warpedThresh) {
         let size = TARGET_WARP_SIZE;
 
         function getIntersections(isRow, pos, matToScan) {
@@ -424,20 +434,25 @@
         vKernel.delete(); vLines.delete();
         gridOnly.delete();
 
-        function verifyUniformity(positions) {
-            if (positions.length < 3) return false;
-            if (positions[0] > size * 0.2) return false;
-            if (positions[positions.length - 1] < size * 0.8) return false;
+        return { hPos, vPos };
+    }
 
-            let spacings = [];
-            for (let i = 1; i < positions.length; i++) spacings.push(positions[i] - positions[i - 1]);
-            let maxS = Math.max(...spacings);
-            let minS = Math.min(...spacings);
-            if (maxS > minS * 3.0) return false;
-            return true;
-        }
+    function verifyLineUniformity(positions, size) {
+        if (positions.length < 3) return false;
+        if (positions[0] > size * 0.2) return false;
+        if (positions[positions.length - 1] < size * 0.8) return false;
 
-        if (!verifyUniformity(hPos) || !verifyUniformity(vPos)) return null;
+        let spacings = [];
+        for (let i = 1; i < positions.length; i++) spacings.push(positions[i] - positions[i - 1]);
+        let maxS = Math.max(...spacings);
+        let minS = Math.min(...spacings);
+        if (maxS > minS * 3.0) return false;
+        return true;
+    }
+
+    function getGridSizeFromLines(hPos, vPos) {
+        const size = TARGET_WARP_SIZE;
+        if (!verifyLineUniformity(hPos, size) || !verifyLineUniformity(vPos, size)) return null;
 
         let cols = (hPos.length >= 5) ? 4 : 2;
         let rows = (vPos.length >= 5) ? 4 : 2;
@@ -445,6 +460,42 @@
         if (rows > 4) rows = 4;
 
         return { rows, cols };
+    }
+
+    // Snaps the rough contour corners to the true outer grid-line
+    // intersections. The coarse quad only needs to roughly contain the
+    // grid; this derives the tight, accurate boundary from it.
+    function refineCorners(sortedPts, hPos, vPos, dstSize) {
+        if (hPos.length < 2 || vPos.length < 2) return sortedPts; // nothing to refine against
+
+        let left = hPos[0], right = hPos[hPos.length - 1];
+        let top = vPos[0], bottom = vPos[vPos.length - 1];
+        if (right - left < dstSize * 0.3 || bottom - top < dstSize * 0.3) return sortedPts; // too degenerate, keep original
+
+        let srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
+            sortedPts[0].x, sortedPts[0].y, sortedPts[1].x, sortedPts[1].y,
+            sortedPts[3].x, sortedPts[3].y, sortedPts[2].x, sortedPts[2].y
+        ]);
+        let dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
+            0, 0, dstSize, 0, 0, dstSize, dstSize, dstSize
+        ]);
+        let Minv = cv.getPerspectiveTransform(dstTri, srcTri);
+
+        let ptsMat = cv.matFromArray(4, 1, cv.CV_32FC2, [
+            left, top, right, top, right, bottom, left, bottom
+        ]);
+        let outMat = new cv.Mat();
+        cv.perspectiveTransform(ptsMat, outMat, Minv);
+
+        let refined = [
+            { x: outMat.data32F[0], y: outMat.data32F[1] },
+            { x: outMat.data32F[2], y: outMat.data32F[3] },
+            { x: outMat.data32F[4], y: outMat.data32F[5] },
+            { x: outMat.data32F[6], y: outMat.data32F[7] }
+        ];
+
+        srcTri.delete(); dstTri.delete(); Minv.delete(); ptsMat.delete(); outMat.delete();
+        return refined;
     }
 
     // ============================================================
@@ -523,7 +574,8 @@
                 }
 
                 if (!bestDigitRect) {
-                    rawValues.push({ val: '', confidence: 100 }); // confidently empty
+                    // No ink at all in this cell — genuinely blank, not a misread.
+                    rawValues.push({ val: '', confidence: 100, hadInk: false });
                 } else {
                     let digitMat = cellMat.roi(bestDigitRect);
                     let pad = 12;
@@ -540,9 +592,9 @@
                         let val = (data.text || '').replace(/[^01xXdD]/g, '').trim().toUpperCase();
                         if (val === 'D') val = 'X';
                         let conf = typeof data.confidence === 'number' ? data.confidence : 0;
-                        rawValues.push({ val: val ? val[0] : '', confidence: conf });
+                        rawValues.push({ val: val ? val[0] : '', confidence: conf, hadInk: true });
                     } catch (e) {
-                        rawValues.push({ val: '', confidence: 0 });
+                        rawValues.push({ val: '', confidence: 0, hadInk: true });
                     }
 
                     digitMat.delete(); paddedMat.delete(); roi.delete();
@@ -554,22 +606,31 @@
 
         warpedColor.delete(); warped.delete(); srcTri.delete(); dstTri.delete(); M.delete(); srcMat.delete();
 
-        // Auto-fill logic: if a cell was ambiguous/unread, infer from the majority
-        let has1 = rawValues.some(v => v.val === '1');
-        let has0 = rawValues.some(v => v.val === '0');
+        // Convention-based fill for cells with NO ink: many hand-drawn K-maps
+        // only mark 1s/Xs and leave 0-cells blank. Base the guess only on
+        // confidently-read cells, and only apply it to true blanks — never to
+        // cells that had ink but failed to OCR (those stay blank + flagged,
+        // since asserting a guessed digit there is more likely to be wrong).
+        const CONF_THRESHOLD = 55;
+        let confidentReads = rawValues.filter(v => v.hadInk && ['0', '1', 'X'].includes(v.val) && v.confidence >= CONF_THRESHOLD);
+        let has1 = confidentReads.some(v => v.val === '1');
+        let has0 = confidentReads.some(v => v.val === '0');
         let fillVal = '';
         if (has1 && !has0) fillVal = '0';
         else if (has0 && !has1) fillVal = '1';
-        else if (has1 && has0) fillVal = 'X';
+        // if both or neither appear, leave blank cells blank rather than guessing 'X'
 
-        const CONF_THRESHOLD = 55;
         let results = [];
         for (let i = 0; i < rawValues.length; i++) {
-            let { val, confidence } = rawValues[i];
-            if (val === '' || !['0', '1', 'X'].includes(val)) {
-                results.push({ val: fillVal || 'X', auto: true, lowConf: true });
-            } else if (confidence < CONF_THRESHOLD) {
-                results.push({ val, auto: false, lowConf: true });
+            let { val, confidence, hadInk } = rawValues[i];
+            if (!hadInk) {
+                // Truly blank cell: apply the convention guess if we have one,
+                // still flagged gold since it's inferred, not read.
+                results.push({ val: fillVal, auto: fillVal !== '', lowConf: fillVal !== '' });
+            } else if (!['0', '1', 'X'].includes(val) || confidence < CONF_THRESHOLD) {
+                // Had ink, but we're not confident what it says — leave blank
+                // and flag it rather than asserting a possibly-wrong digit.
+                results.push({ val: '', auto: false, lowConf: true });
             } else {
                 results.push({ val, auto: false, lowConf: false });
             }
