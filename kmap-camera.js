@@ -106,49 +106,61 @@
 
     function getGridSizeRobust(warpedThresh) {
         let size = TARGET_WARP_SIZE;
-        let colSums = new Float32Array(size);
-        let rowSums = new Float32Array(size);
         
-        // Ignore outer 15% to strictly avoid bounding box borders
-        let margin = Math.floor(size * 0.15);
-        
-        for (let y = margin; y < size - margin; y++) {
-            let rowPtr = warpedThresh.ucharPtr(y);
-            for (let x = margin; x < size - margin; x++) {
-                if (rowPtr[x] > 128) {
-                    colSums[x]++;
-                    rowSums[y]++;
+        function getIntersections(isRow, pos) {
+            let positions = [];
+            let inLine = false;
+            let lineStart = 0;
+            let ptr = isRow ? warpedThresh.ucharPtr(pos) : null;
+            
+            for (let i = 0; i < size; i++) {
+                let val = isRow ? ptr[i] : warpedThresh.ucharPtr(i, pos)[0];
+                if (val > 128) {
+                    if (!inLine) { inLine = true; lineStart = i; }
+                } else {
+                    if (inLine) {
+                        positions.push((lineStart + i) / 2); // Center of the thick line
+                        inLine = false;
+                    }
                 }
             }
+            if (inLine) positions.push((lineStart + size) / 2);
+            return positions;
         }
         
-        let xThreshold = (size - 2*margin) * 0.2; // 20% of vertical length
-        let yThreshold = (size - 2*margin) * 0.2; // 20% of horizontal length
+        // Sample at 50%
+        let hPos = getIntersections(true, Math.floor(size * 0.5));
+        let vPos = getIntersections(false, Math.floor(size * 0.5));
         
-        let xPeaks = 0;
-        let inXPeak = false;
-        for (let i = margin; i < size - margin; i++) {
-            if (colSums[i] > xThreshold) {
-                if (!inXPeak) { xPeaks++; inXPeak = true; }
-            } else { inXPeak = false; }
+        function verifyUniformity(positions) {
+            if (positions.length < 3) return false;
+            // First line should be near 0, last should be near size
+            if (positions[0] > size * 0.2) return false;
+            if (positions[positions.length - 1] < size * 0.8) return false;
+            
+            let spacings = [];
+            for (let i = 1; i < positions.length; i++) {
+                spacings.push(positions[i] - positions[i-1]);
+            }
+            let maxS = Math.max(...spacings);
+            let minS = Math.min(...spacings);
+            
+            // Reject if highly non-uniform
+            if (maxS > minS * 3.0) return false;
+            return true;
         }
         
-        let yPeaks = 0;
-        let inYPeak = false;
-        for (let i = margin; i < size - margin; i++) {
-            if (rowSums[i] > yThreshold) {
-                if (!inYPeak) { yPeaks++; inYPeak = true; }
-            } else { inYPeak = false; }
+        if (!verifyUniformity(hPos) || !verifyUniformity(vPos)) {
+            return null;
         }
         
-        // internal lines + 1 = total cells per dimension
-        let rows = yPeaks + 1;
-        let cols = xPeaks + 1;
+        let cols = (hPos.length >= 5) ? 4 : 2;
+        let rows = (vPos.length >= 5) ? 4 : 2;
         
-        if ((rows === 2 || rows === 4) && (cols === 2 || cols === 4)) {
-            return { rows, cols };
-        }
-        return null;
+        if (cols > 4) cols = 4;
+        if (rows > 4) rows = 4;
+        
+        return { rows, cols };
     }
 
     function renderLoop() {
@@ -185,71 +197,77 @@
         let bestQuad = null;
         let bestGridParams = null;
         
+        let contourList = [];
         for (let i = 0; i < contours.size(); ++i) {
             let cnt = contours.get(i);
             let hull = new cv.Mat();
             cv.convexHull(cnt, hull, false, true);
             let area = cv.contourArea(hull);
             
-            if (area > 20000 && area > maxArea) {
+            if (area > 10000) {
                 let peri = cv.arcLength(hull, true);
                 let approx = new cv.Mat();
                 cv.approxPolyDP(hull, approx, 0.05 * peri, true);
-                
                 if (approx.rows === 4) {
-                    let validAngles = true;
-                    for (let j = 0; j < 4; j++) {
-                        let p1 = {x: approx.data32S[j*2], y: approx.data32S[j*2+1]};
-                        let p2 = {x: approx.data32S[((j+1)%4)*2], y: approx.data32S[((j+1)%4)*2+1]};
-                        let p3 = {x: approx.data32S[((j+2)%4)*2], y: approx.data32S[((j+2)%4)*2+1]};
-                        
-                        let v1 = {x: p1.x - p2.x, y: p1.y - p2.y};
-                        let v2 = {x: p3.x - p2.x, y: p3.y - p2.y};
-                        
-                        let dot = v1.x*v2.x + v1.y*v2.y;
-                        let mag1 = Math.hypot(v1.x, v1.y);
-                        let mag2 = Math.hypot(v2.x, v2.y);
-                        let angle = Math.acos(dot / (mag1 * mag2)) * 180 / Math.PI;
-                        
-                        if (angle < 60 || angle > 120) { validAngles = false; break; }
-                    }
-                    
-                    if (validAngles) {
-                        // Strict Verification: Warp it and check for internal grid lines
-                        let pts = [];
-                        for (let k = 0; k < 4; k++) pts.push({x: approx.data32S[k*2], y: approx.data32S[k*2+1]});
-                        pts.sort((a,b) => a.y - b.y);
-                        let top = pts.slice(0,2).sort((a,b) => a.x - b.x);
-                        let bottom = pts.slice(2,4).sort((a,b) => a.x - b.x);
-                        let sortedPts = [top[0], top[1], bottom[1], bottom[0]];
-                        
-                        let srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
-                            sortedPts[0].x, sortedPts[0].y, sortedPts[1].x, sortedPts[1].y,
-                            sortedPts[3].x, sortedPts[3].y, sortedPts[2].x, sortedPts[2].y
-                        ]);
-                        let dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
-                            0, 0, TARGET_WARP_SIZE, 0, 0, TARGET_WARP_SIZE, TARGET_WARP_SIZE, TARGET_WARP_SIZE
-                        ]);
-                        let M = cv.getPerspectiveTransform(srcTri, dstTri);
-                        let warped = new cv.Mat();
-                        cv.warpPerspective(thresh, warped, M, new cv.Size(TARGET_WARP_SIZE, TARGET_WARP_SIZE));
-                        
-                        let gridCheck = getGridSizeRobust(warped);
-                        if (gridCheck) {
-                            maxArea = area;
-                            if (bestQuad) bestQuad.delete();
-                            bestQuad = approx.clone();
-                            bestGridParams = { pts: sortedPts, rows: gridCheck.rows, cols: gridCheck.cols };
-                        }
-                        
-                        srcTri.delete(); dstTri.delete(); M.delete(); warped.delete();
-                    }
+                    contourList.push({ area, approx: approx.clone() });
                 }
                 approx.delete();
             }
             hull.delete();
-            cnt.delete();
         }
+        
+        contourList.sort((a,b) => b.area - a.area);
+        
+        for (let i = 0; i < contourList.length; i++) {
+            let approx = contourList[i].approx;
+            let validAngles = true;
+            for (let j = 0; j < 4; j++) {
+                let p1 = {x: approx.data32S[j*2], y: approx.data32S[j*2+1]};
+                let p2 = {x: approx.data32S[((j+1)%4)*2], y: approx.data32S[((j+1)%4)*2+1]};
+                let p3 = {x: approx.data32S[((j+2)%4)*2], y: approx.data32S[((j+2)%4)*2+1]};
+                
+                let v1 = {x: p1.x - p2.x, y: p1.y - p2.y};
+                let v2 = {x: p3.x - p2.x, y: p3.y - p2.y};
+                
+                let dot = v1.x*v2.x + v1.y*v2.y;
+                let mag1 = Math.hypot(v1.x, v1.y);
+                let mag2 = Math.hypot(v2.x, v2.y);
+                let angle = Math.acos(dot / (mag1 * mag2)) * 180 / Math.PI;
+                
+                if (angle < 60 || angle > 120) { validAngles = false; break; }
+            }
+            
+            if (validAngles) {
+                let pts = [];
+                for (let k = 0; k < 4; k++) pts.push({x: approx.data32S[k*2], y: approx.data32S[k*2+1]});
+                pts.sort((a,b) => a.y - b.y);
+                let top = pts.slice(0,2).sort((a,b) => a.x - b.x);
+                let bottom = pts.slice(2,4).sort((a,b) => a.x - b.x);
+                let sortedPts = [top[0], top[1], bottom[1], bottom[0]];
+                
+                let srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
+                    sortedPts[0].x, sortedPts[0].y, sortedPts[1].x, sortedPts[1].y,
+                    sortedPts[3].x, sortedPts[3].y, sortedPts[2].x, sortedPts[2].y
+                ]);
+                let dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
+                    0, 0, TARGET_WARP_SIZE, 0, 0, TARGET_WARP_SIZE, TARGET_WARP_SIZE, TARGET_WARP_SIZE
+                ]);
+                let M = cv.getPerspectiveTransform(srcTri, dstTri);
+                let warped = new cv.Mat();
+                cv.warpPerspective(thresh, warped, M, new cv.Size(TARGET_WARP_SIZE, TARGET_WARP_SIZE));
+                
+                let gridCheck = getGridSizeRobust(warped);
+                if (gridCheck) {
+                    bestQuad = approx.clone();
+                    bestGridParams = { pts: sortedPts, rows: gridCheck.rows, cols: gridCheck.cols };
+                    srcTri.delete(); dstTri.delete(); M.delete(); warped.delete();
+                    break;
+                }
+                
+                srcTri.delete(); dstTri.delete(); M.delete(); warped.delete();
+            }
+        }
+        for (let i = 0; i < contourList.length; i++) contourList[i].approx.delete();
         
         let ctx = overlay.getContext('2d');
         ctx.clearRect(0, 0, overlay.width, overlay.height);
