@@ -34,7 +34,7 @@
     const STABILITY_FRAMES = 7;
     const STABILITY_POS_TOL_RATIO = 0.05; // allowed centroid jitter, as a fraction of grid width
     const STABILITY_POS_TOL_MIN = 22;     // px floor, so small/far-away grids aren't overly strict
-    const MISS_GRACE_MS = 1400;    // grace period (ms) before a lost detection resets progress
+    const MISS_GRACE_MS = 2000;    // grace period (ms) before a lost detection resets progress
 
     let reviewRows = 0, reviewCols = 0;
     let reviewValues = [];  // { val: '0'|'1'|'X'|'', auto: bool, lowConf: bool }
@@ -520,8 +520,14 @@
         if (!expected) return null;
         const size = TARGET_WARP_SIZE;
         if (!verifyLineUniformity(hPos, size) || !verifyLineUniformity(vPos, size)) return null;
-        if (hPos.length !== expected.cols + 1) return null;
-        if (vPos.length !== expected.rows + 1) return null;
+        // Bucket-classify from the (already outlier-trimmed) line counts
+        // instead of demanding an exact N+1 match. A little jitter or blur
+        // can make one line drop out or double up on a given frame; that
+        // shouldn't fail the whole match as long as it still clearly reads
+        // as the expected size.
+        let inferredCols = (hPos.length >= 5) ? 4 : 2;
+        let inferredRows = (vPos.length >= 5) ? 4 : 2;
+        if (inferredCols !== expected.cols || inferredRows !== expected.rows) return null;
         return expected;
     }
 
@@ -692,10 +698,13 @@
                 // still flagged gold since it's inferred, not read.
                 results.push({ val: fillVal, auto: fillVal !== '', lowConf: fillVal !== '' });
             } else if (!['0', '1', 'X'].includes(val)) {
-                // OCR produced nothing usable at all — there's genuinely no
-                // guess to offer, so this is the one case left blank for
-                // the user to fill in.
-                results.push({ val: '', auto: false, lowConf: true });
+                // OCR didn't return a parseable character, but there's
+                // clearly ink here — don't punt this to the user as blank.
+                // Take the same best-guess convention used for blank cells
+                // (or default to '1', since a marked cell is far more often
+                // a 1/X than a genuine 0), and flag it gold for review.
+                let guess = fillVal || '1';
+                results.push({ val: guess, auto: true, lowConf: true });
             } else {
                 // We got a plausible reading. Always take it as the best
                 // guess rather than making the user type it — cells below
