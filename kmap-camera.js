@@ -279,7 +279,7 @@
                 let warped = new cv.Mat();
                 cv.warpPerspective(thresh, warped, M, new cv.Size(TARGET_WARP_SIZE, TARGET_WARP_SIZE));
 
-                let { hPos, vPos } = detectGridLines(warped);
+                let { hPos, vPos } = detectGridLines(warped, TARGET_WARP_SIZE, TARGET_WARP_SIZE);
                 // Since the person always tells us which grid size to expect
                 // now (2/3/4 Var — no more Auto), don't just trust any
                 // 4-cornered shape. Require the detected internal lines to
@@ -296,10 +296,16 @@
                     // LINES (text is erased by the line-isolation morphology),
                     // so cell math lines up with the real borders.
                     let refinedPts = refineCorners(sortedPts, hPos, vPos, TARGET_WARP_SIZE);
-                    bestQuad = approx.clone();
-                    bestGridParams = { pts: refinedPts, rows: gridCheck.rows, cols: gridCheck.cols };
-                    srcTri.delete(); dstTri.delete(); M.delete(); warped.delete();
-                    break;
+                    if (isValidRectangle(refinedPts)) {
+                        bestQuad = approx.clone();
+                        bestGridParams = { pts: refinedPts, rows: gridCheck.rows, cols: gridCheck.cols };
+                        srcTri.delete(); dstTri.delete(); M.delete(); warped.delete();
+                        break;
+                    }
+                    // Refinement produced a skewed/stretched shape — an
+                    // outside line or label most likely threw off a corner.
+                    // Don't accept a distorted grid; fall through and try
+                    // the next contour candidate instead.
                 }
 
                 srcTri.delete(); dstTri.delete(); M.delete(); warped.delete();
@@ -405,6 +411,29 @@
         return Math.hypot(p1.x - p2.x, p1.y - p2.y);
     }
 
+    // Confirms a set of 4 corners still looks like a clean, roughly
+    // rectangular grid boundary. If the outer contour swept in an outside
+    // line or label, the line-based refinement can end up pulling one
+    // corner off in a way that visibly stretches/skews the result — this
+    // catches that so the candidate gets rejected instead of accepted.
+    function isValidRectangle(pts) {
+        for (let j = 0; j < 4; j++) {
+            let p1 = pts[j];
+            let p2 = pts[(j + 1) % 4];
+            let p3 = pts[(j + 2) % 4];
+            let v1 = { x: p1.x - p2.x, y: p1.y - p2.y };
+            let v2 = { x: p3.x - p2.x, y: p3.y - p2.y };
+            let mag1 = Math.hypot(v1.x, v1.y);
+            let mag2 = Math.hypot(v2.x, v2.y);
+            if (mag1 < 1 || mag2 < 1) return false;
+            let dot = v1.x * v2.x + v1.y * v2.y;
+            let cos = Math.max(-1, Math.min(1, dot / (mag1 * mag2)));
+            let angle = Math.acos(cos) * 180 / Math.PI;
+            if (angle < 75 || angle > 105) return false;
+        }
+        return true;
+    }
+
     function setProgress(frac) {
         if (progressBar) progressBar.style.width = `${Math.round(Math.min(1, Math.max(0, frac)) * 100)}%`;
     }
@@ -412,16 +441,17 @@
     // Isolates only long, solid grid lines (morph-open erases thin text/noise
     // shorter than ~size/8 px) and returns the x-positions of vertical lines
     // (hPos) and y-positions of horizontal lines (vPos) inside the warp.
-    function detectGridLines(warpedThresh) {
-        let size = TARGET_WARP_SIZE;
+    function detectGridLines(warpedThresh, width, height) {
+        width = width || TARGET_WARP_SIZE;
+        height = height || TARGET_WARP_SIZE;
 
-        function getIntersections(isRow, pos, matToScan) {
+        function getIntersections(isRow, pos, matToScan, length) {
             let positions = [];
             let inLine = false;
             let lineStart = 0;
             let ptr = isRow ? matToScan.ucharPtr(pos) : null;
 
-            for (let i = 0; i < size; i++) {
+            for (let i = 0; i < length; i++) {
                 let val = isRow ? ptr[i] : matToScan.ucharPtr(i, pos)[0];
                 if (val > 128) {
                     if (!inLine) { inLine = true; lineStart = i; }
@@ -432,11 +462,11 @@
                     }
                 }
             }
-            if (inLine) positions.push((lineStart + size) / 2);
+            if (inLine) positions.push((lineStart + length) / 2);
             return positions;
         }
 
-        let kernelSize = Math.floor(size / 8);
+        let kernelSize = Math.max(6, Math.floor(Math.min(width, height) / 8));
         let hKernel = cv.getStructuringElement(cv.MORPH_RECT, new cv.Size(kernelSize, 1));
         let hLines = new cv.Mat();
         cv.morphologyEx(warpedThresh, hLines, cv.MORPH_OPEN, hKernel);
@@ -448,8 +478,11 @@
         let gridOnly = new cv.Mat();
         cv.add(hLines, vLines, gridOnly);
 
-        let hPos = getIntersections(true, Math.floor(size * 0.5), gridOnly);
-        let vPos = getIntersections(false, Math.floor(size * 0.5), gridOnly);
+        // hPos = x-positions of vertical lines, found by scanning one fixed
+        // row across the full width. vPos = y-positions of horizontal
+        // lines, found by scanning one fixed column across the full height.
+        let hPos = getIntersections(true, Math.floor(height * 0.5), gridOnly, width);
+        let vPos = getIntersections(false, Math.floor(width * 0.5), gridOnly, height);
 
         hKernel.delete(); hLines.delete();
         vKernel.delete(); vLines.delete();
@@ -585,6 +618,29 @@
         analyzeFrame(src, gridParams.pts, gridParams.rows, gridParams.cols);
     }
 
+    // Builds the pixel boundaries between cells along one axis. The two
+    // outer edges are pinned to 0 / totalSize (already accurately fixed by
+    // the refined outer corners), and the interior dividers use the
+    // actually-measured line positions rather than assuming they're evenly
+    // spaced — a residual perspective/lens imperfection can otherwise leave
+    // cells nearest one corner visibly stretched or offset. Falls back to
+    // uniform spacing if this frame didn't yield a clean, sane line count.
+    function buildCellBounds(linePositions, count, totalSize) {
+        if (linePositions.length === count + 1) {
+            let bounds = [0];
+            for (let i = 1; i < count; i++) bounds.push(linePositions[i]);
+            bounds.push(totalSize);
+            let sane = true;
+            for (let i = 1; i < bounds.length; i++) {
+                if (bounds[i] - bounds[i - 1] < totalSize * 0.15) { sane = false; break; }
+            }
+            if (sane) return bounds;
+        }
+        let bounds = [];
+        for (let i = 0; i <= count; i++) bounds.push(i * (totalSize / count));
+        return bounds;
+    }
+
     async function analyzeFrame(srcMat, pts, rows, cols) {
         let srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
             pts[0].x, pts[0].y, pts[1].x, pts[1].y,
@@ -613,18 +669,30 @@
         cv.cvtColor(warpedColor, warped, cv.COLOR_RGBA2GRAY, 0);
         cv.adaptiveThreshold(warped, warped, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY_INV, 15, 10);
 
-        let cellW = dstSizeW / cols;
-        let cellH = dstSizeH / rows;
+        // Re-detect the grid lines on this final, frozen frame specifically
+        // (rather than reusing positions from the live scanning phase) and
+        // use their actual measured positions as the cell boundaries. Even
+        // after the outer corners are correct, a slightly imperfect
+        // perspective fit can leave interior lines not perfectly evenly
+        // spaced (most visible near one corner) — assuming uniform spacing
+        // there was cropping cells from the wrong spot. Falls back to even
+        // spacing if this particular frame doesn't yield a clean exact
+        // line count.
+        let { hPos: finalHPos, vPos: finalVPos } = detectGridLines(warped, dstSizeW, dstSizeH);
+        let colBounds = buildCellBounds(finalHPos, cols, dstSizeW);
+        let rowBounds = buildCellBounds(finalVPos, rows, dstSizeH);
 
         let rawValues = []; // { val, confidence }
 
         for (let r = 0; r < rows; r++) {
             for (let c = 0; c < cols; c++) {
-                let padX = Math.floor(cellW * 0.2);
-                let padY = Math.floor(cellH * 0.2);
+                let cellWpx = colBounds[c + 1] - colBounds[c];
+                let cellHpx = rowBounds[r + 1] - rowBounds[r];
+                let padX = Math.floor(cellWpx * 0.2);
+                let padY = Math.floor(cellHpx * 0.2);
                 let rect = new cv.Rect(
-                    Math.floor(c * cellW) + padX, Math.floor(r * cellH) + padY,
-                    Math.floor(cellW) - 2 * padX, Math.floor(cellH) - 2 * padY
+                    Math.floor(colBounds[c]) + padX, Math.floor(rowBounds[r]) + padY,
+                    Math.floor(cellWpx) - 2 * padX, Math.floor(cellHpx) - 2 * padY
                 );
                 let cellMat = warped.roi(rect);
 
